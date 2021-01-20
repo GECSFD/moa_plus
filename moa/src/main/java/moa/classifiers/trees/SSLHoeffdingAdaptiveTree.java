@@ -1,5 +1,5 @@
 /*
- *    HoeffdingAdaptiveTreeSSL.java
+ *    SSLHoeffdingAdaptiveTree.java
  *    Copyright (C) 2008 University of Waikato, Hamilton, New Zealand
  *    @author Albert Bifet (abifet at cs dot waikato dot ac dot nz)
  *
@@ -122,7 +122,7 @@ class Attribute {
     }
 }
 
-public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
+public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
     private static final long serialVersionUID = 1L;
     protected int alternateTrees;
@@ -459,7 +459,7 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
 
     @Override
     public ImmutableCapabilities defineImmutableCapabilities() {
-        if (this.getClass() == HoeffdingAdaptiveTreeSSL.class)
+        if (this.getClass() == SSLHoeffdingAdaptiveTree.class)
             return new ImmutableCapabilities(Capability.VIEW_STANDARD, Capability.VIEW_LITE);
         else
             return new ImmutableCapabilities(Capability.VIEW_STANDARD);
@@ -477,9 +477,9 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
 
         boolean isNullError();
 
-        void killTreeChilds(HoeffdingAdaptiveTreeSSL ht);
+        void killTreeChilds(SSLHoeffdingAdaptiveTree ht);
 
-        void learnFromInstance(Instance inst, HoeffdingAdaptiveTreeSSL ht, SplitNode parent, int parentBranch);
+        void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch);
 
         void filterInstanceToLeaves(Instance inst, SplitNode myparent, int parentBranch, List<FoundNode> foundNodes,
                                     boolean updateSplitterCounts);
@@ -566,7 +566,7 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
         // LearningNodes can split, but SplitNodes can't
         // Parent nodes are allways SplitNodes
         @Override
-        public void learnFromInstance(Instance inst, HoeffdingAdaptiveTreeSSL ht, SplitNode parent, int parentBranch) {
+        public void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
             int numAttributes = inst.numAttributes() - 1;
 
             // instanciando os atributos
@@ -720,7 +720,7 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
         }
 
         @Override
-        public void killTreeChilds(HoeffdingAdaptiveTreeSSL ht) {
+        public void killTreeChilds(SSLHoeffdingAdaptiveTree ht) {
             for (Node child : this.children) {
                 if (child != null) {
                     //Delete alternate tree if it exists
@@ -821,11 +821,11 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
         }
 
         @Override
-        public void killTreeChilds(HoeffdingAdaptiveTreeSSL ht) {
+        public void killTreeChilds(SSLHoeffdingAdaptiveTree ht) {
         }
 
         @Override
-        public void learnFromInstance(Instance inst, HoeffdingAdaptiveTreeSSL ht, SplitNode parent, int parentBranch) {
+        public void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
             if (ht.validateClassIsMissing(inst)) {
                 this.rcCounter++;
                 DoubleVector newOb = new DoubleVector();
@@ -964,7 +964,7 @@ public class HoeffdingAdaptiveTreeSSL extends HoeffdingTree {
         @Override
         public double[] getClassVotes(Instance inst, HoeffdingTree ht) {
             double[] dist;
-            int predictionOption = ((HoeffdingAdaptiveTreeSSL) ht).leafpredictionOption.getChosenIndex();
+            int predictionOption = ((SSLHoeffdingAdaptiveTree) ht).leafpredictionOption.getChosenIndex();
             if (predictionOption == 0) { //MC
                 dist = this.observedClassDistribution.getArrayCopy();
             } else if (predictionOption == 1) { //NB

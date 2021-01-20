@@ -39,12 +39,12 @@ import java.util.Set;
  * FOR FEATURE DRIFTING DATA STREAMS. In European Conference on Machine Learning
  * and Principles and Practice of Knowledge Discovery (ECML/PKDD'16). 2016.
  */
-public class HoeffdingAdaptiveTreeSSLClassifLeaves extends HoeffdingAdaptiveTreeSSL {
+public class SSLHoeffdingAdaptiveTreeClassifLeaves extends SSLHoeffdingAdaptiveTree {
 
     public ClassOption leaveLearnerOption = new ClassOption("leaveLearner", 'a',
             "Classifier to train.", Classifier.class, "bayes.NaiveBayes");
 
-    public HoeffdingAdaptiveTreeSSLClassifLeaves() {
+    public SSLHoeffdingAdaptiveTreeClassifLeaves() {
         this.removePoorAttsOption = null;
     }
 
@@ -59,7 +59,7 @@ public class HoeffdingAdaptiveTreeSSLClassifLeaves extends HoeffdingAdaptiveTree
     }
 
     @Override
-    protected void attemptToSplit(ActiveLearningNode node, SplitNode parent, int parentIndex, double impurity, Instance inst, HoeffdingAdaptiveTreeSSL ht) {
+    protected void attemptToSplit(ActiveLearningNode node, SplitNode parent, int parentIndex, double impurity, Instance inst, SSLHoeffdingAdaptiveTree ht) {
         System.out.println("impurity adaptativeleaves " + impurity);
         if (!node.observedClassDistributionIsPure()) {
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
@@ -147,7 +147,7 @@ public class HoeffdingAdaptiveTreeSSLClassifLeaves extends HoeffdingAdaptiveTree
             super(initialClassObservations);
         }
 
-        public LearningNodeHATClassifier(double[] initialClassObservations, Classifier cl, HoeffdingAdaptiveTreeSSLClassifLeaves ht) {
+        public LearningNodeHATClassifier(double[] initialClassObservations, Classifier cl, SSLHoeffdingAdaptiveTreeClassifLeaves ht) {
             super(initialClassObservations);
 
             if (cl == null) {
@@ -159,7 +159,7 @@ public class HoeffdingAdaptiveTreeSSLClassifLeaves extends HoeffdingAdaptiveTree
 
         @Override
         public double[] getClassVotes(Instance inst, HoeffdingTree ht) {
-            if (getWeightSeen() >= ((HoeffdingAdaptiveTreeSSLClassifLeaves) ht).nbThresholdOption.getValue()) {
+            if (getWeightSeen() >= ((SSLHoeffdingAdaptiveTreeClassifLeaves) ht).nbThresholdOption.getValue()) {
                 return this.classifier.getVotesForInstance(inst);
             }
             return super.getClassVotes(inst, ht);

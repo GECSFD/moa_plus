@@ -737,7 +737,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
     }
 
-    protected void attemptToSplit(ActiveLearningNode node, SplitNode parent, int parentIndex, double impurity, Instance inst, HoeffdingAdaptiveTreeSSL ht) {
+    protected void attemptToSplit(ActiveLearningNode node, SplitNode parent, int parentIndex, double impurity, Instance inst, SSLHoeffdingAdaptiveTree ht) {
 
 
 //        if (Double.isNaN(inst.classValue())) {
