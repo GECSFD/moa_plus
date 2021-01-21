@@ -349,31 +349,31 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
         this.total++;
 
-        try {
-            File myObj = new File("C:\\Users\\Kenny\\Downloads\\roc.csv");
-            if (!myObj.exists()) {
-                myObj.createNewFile();
-            }
-
-            FileWriter myWriter = new FileWriter("C:\\Users\\Kenny\\Downloads\\roc.csv", true);
-            String string = this.correct + "," + this.wrong + "," + (this.correct + this.wrong) + "\n";
-
-            DecimalFormat df = new DecimalFormat("#.##");
-
-//            if (this.trueClass.size() > 0) {
-//                for(int i = this.trueClass.size() - 1; i < this.trueClass.size(); i++) {
-//                    string += this.trueClass.get(i) + "," + df.format(this.predictedClass.get(i)) + "\n";
-//                }
+//        try {
+//            File myObj = new File("C:\\Users\\Kenny\\Downloads\\roc.csv");
+//            if (!myObj.exists()) {
+//                myObj.createNewFile();
 //            }
-
-//            string = this.c0 + "," + this.c1 + "\n";
-
-            if((this.correct + this.wrong) % 1000 == 0)
-                myWriter.write(string);
-            myWriter.close();
-        } catch (java.io.IOException e) {
-            System.out.println("An error occurred.");
-        }
+//
+//            FileWriter myWriter = new FileWriter("C:\\Users\\Kenny\\Downloads\\roc.csv", true);
+//            String string = this.correct + "," + this.wrong + "," + (this.correct + this.wrong) + "\n";
+//
+//            DecimalFormat df = new DecimalFormat("#.##");
+//
+////            if (this.trueClass.size() > 0) {
+////                for(int i = this.trueClass.size() - 1; i < this.trueClass.size(); i++) {
+////                    string += this.trueClass.get(i) + "," + df.format(this.predictedClass.get(i)) + "\n";
+////                }
+////            }
+//
+////            string = this.c0 + "," + this.c1 + "\n";
+//
+//            if((this.correct + this.wrong) % 1000 == 0)
+//                myWriter.write(string);
+//            myWriter.close();
+//        } catch (java.io.IOException e) {
+//            System.out.println("An error occurred.");
+//        }
 
         int numAttributes = inst.numAttributes() - 1;
 
