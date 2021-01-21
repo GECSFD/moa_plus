@@ -19,6 +19,8 @@
  */
 package moa.classifiers.trees;
 
+import com.github.javacliparser.FloatOption;
+import com.github.javacliparser.MultiChoiceOption;
 import com.yahoo.labs.samoa.instances.Instance;
 import moa.capabilities.Capability;
 import moa.capabilities.ImmutableCapabilities;
@@ -143,11 +145,30 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     int c0 = 0;
     int c1 = 0;
 
-    boolean rcEnabled = false;
+    boolean rcEnabled = true;
 
-    double removeChance = 0.9;
+    double removeChance = 0.1;
 
     int unlabeledCounter = 0;
+
+//    Choose if remove classes is ative from the GUI.
+    public MultiChoiceOption rcChooser = new MultiChoiceOption(
+            "RC",
+            'R',
+            "If is true remove some classes to semi-supervised learning",
+            new String[]{"True", "False"},
+            new String[]{"true", "false"},
+            0);
+
+//    Choose the chance of removing a class from the GUI
+    public FloatOption removeChanceChooser = new FloatOption(
+            "removeChance",
+            'C',
+            "Chance of removing a class of a instance, for semi-supervised learning," +
+                    " only works when RC is true",
+            0.1,
+            0.0,
+            1.0);
 
     /*   public MultiChoiceOption leafpredictionOption = new MultiChoiceOption(
             "leafprediction", 'l', "Leaf prediction to use.", new String[]{
@@ -309,6 +330,9 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     @Override
     public void trainOnInstanceImpl(Instance inst) {
         Instance newInstance = inst.copy();
+
+        this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
+        this.removeChance = this.removeChanceChooser.getValue();
 
         if (this.rcEnabled && Math.random() < this.removeChance) {
             newInstance.setClassValue(newInstance.classIndex(), Double.NaN);
