@@ -1,3 +1,19 @@
+
+# Building and Running for Development
+
+1. Build using Meaven
+```bash
+ mvn clean package
+```
+
+2. Training an Evaluating example from the built jar
+```bash
+java -cp moa/target/moa-2020.07.2-SNAPSHOT.jar moa.DoTask \
+  "EvaluateModel -m (LearnModel -l trees.HoeffdingTree \
+  -s generators.WaveformGenerator -m 1000000) \
+-s (generators.WaveformGenerator -i 2) -i 1000000"
+```
+
 # MOA (Massive Online Analysis)
 [![Build Status](https://travis-ci.org/Waikato/moa.svg?branch=master)](https://travis-ci.org/Waikato/moa)
 [![Maven Central](https://img.shields.io/maven-central/v/nz.ac.waikato.cms.moa/moa-pom.svg)](https://mvnrepository.com/artifact/nz.ac.waikato.cms)
