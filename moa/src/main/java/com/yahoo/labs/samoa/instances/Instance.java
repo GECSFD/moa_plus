@@ -328,4 +328,17 @@ public interface Instance extends Serializable {
      */
     public double valueOutputAttribute(int attributeIndex);
 
+
+    //VITOR
+    /**
+     * Sets the class value of an instance to be "missing". A deep copy of the
+     * vector of attribute values is performed before the value is set to be
+     * missing.
+     *
+     * @throws UnassignedClassException if the class is not set
+     * @throws UnassignedDatasetException if the instance doesn't have access to a
+     *           dataset
+     */
+    public void setClassMissing();
+
 }

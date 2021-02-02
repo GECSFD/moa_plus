@@ -481,4 +481,16 @@ public class InstanceImpl implements MultiLabelInstance {
         int index = this.instanceHeader.indexOf(attribute);
         this.setValue(index, value);
     }
+
+    //VITOR
+    @Override
+    public void setClassMissing() {
+
+        int classIndex = classIndex();
+        if (classIndex < 0) {
+            System.out.println("Class is not set!");
+            //throw new UnassignedClassException("Class is not set!");
+        }
+        setMissing(classIndex);
+    }
 }
