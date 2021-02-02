@@ -3,7 +3,7 @@
 
 1. Build using Meaven
 ```bash
- mvn clean package
+ mvn clean package -DskipTests
 ```
 
 2. Training an Evaluating example from the built jar
