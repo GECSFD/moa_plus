@@ -247,6 +247,7 @@ public abstract class AbstractClassifier extends AbstractOptionHandler
     @Override
     public void trainOnInstance(Example<Instance> example){
 		trainOnInstance(example.getData());
+		//RETORNA UMA INSTANCIA
 	}
 
     @Override

@@ -81,36 +81,64 @@ public class RC implements Serializable {
     public RC() {
 
     }
-
+    //MODIFICADO POR VITOR E IGOR
     /**
      * Compute a new set containing the same instances as provided in originalInstances
      * but with the class attribute missing accordingly to the probability set.
      * An uniform distribution with the set seed is used in order to decide with instances
      * should have the class removed.
      *
-     * @param originalInstances
+     * @param originalInstance
      * @return a set containing the same provided instances but without the class for some
      */
-
-    public Instances getInstancesWithRemovedClasses(Instances originalInstances) {
+    public Instance getInstanceWithRemovedClass(Instance originalInstance,double removeChance){
         Random random = new Random(m_removeClassSeed);
-        Instances newInstances = new Instances(originalInstances, originalInstances.numInstances());
-        for(int i=0;i<originalInstances.numInstances();i++){
-            Instance newInstance = (Instance) (originalInstances.instance(i).copy());
-                if (random.nextFloat()<m_removeClassProbability) {
-                    newInstance.setClassMissing();
-            }
-            newInstances.add(newInstance);
+        Instance newInstance = originalInstance.copy();
+        //PERCORRERIA A LISTA PRA ACHAR NEWINSTANCE
+        if(random.nextFloat()<removeChance){
+            newInstance.setClassMissing();
+            System.out.println("removeu!");
         }
-//        for (Instance originalInstance : originalInstances.) {
-//            Instance newInstance = (Instance) (originalInstance.copy());
-//            if (random.nextFloat()<m_removeClassProbability) {
-//                newInstance.setClassMissing();
+        return newInstance;
+    }
+
+//    public Instances getInstancesWithRemovedClasses(Instances originalInstances) {
+//        Random random = new Random(m_removeClassSeed);
+//        Instances newInstances = new Instances(originalInstances, originalInstances.numInstances());
+//        for(int i=0;i<originalInstances.numInstances();i++){
+//            Instance newInstance = (Instance) (originalInstances.instance(i).copy());
+//                if (random.nextFloat()<m_removeClassProbability) {
+//                    newInstance.setClassMissing();public Instances getInstancesWithRemovedClasses(Instances originalInstances) {
+//        Random random = new Random(m_removeClassSeed);
+//        Instances newInstances = new Instances(originalInstances, originalInstances.numInstances());
+//        for(int i=0;i<originalInstances.numInstances();i++){
+//            Instance newInstance = (Instance) (originalInstances.instance(i).copy());
+//                if (random.nextFloat()<m_removeClassProbability) {
+//                    newInstance.setClassMissing();
 //            }
 //            newInstances.add(newInstance);
 //        }
-        return newInstances;
-    }
+////        for (Instance originalInstance : originalInstances.) {
+////            Instance newInstance = (Instance) (originalInstance.copy());
+////            if (random.nextFloat()<m_removeClassProbability) {
+////                newInstance.setClassMissing();
+////            }
+////            newInstances.add(newInstance);
+////        }
+//        return newInstances;
+//    }
+//            }
+//            newInstances.add(newInstance);
+//        }
+////        for (Instance originalInstance : originalInstances.) {
+////            Instance newInstance = (Instance) (originalInstance.copy());
+////            if (random.nextFloat()<m_removeClassProbability) {
+////                newInstance.setClassMissing();
+////            }
+////            newInstances.add(newInstance);
+////        }
+//        return newInstances;
+//    }
 
 //    /**
 //     * Returns an enumeration describing the available options.

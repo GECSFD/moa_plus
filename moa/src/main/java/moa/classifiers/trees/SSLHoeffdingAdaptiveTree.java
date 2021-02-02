@@ -27,6 +27,7 @@ import moa.capabilities.ImmutableCapabilities;
 import moa.classifiers.bayes.NaiveBayes;
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
 import moa.classifiers.core.driftdetection.ADWIN;
+import moa.classifiers.trees.iadem.rcutils.RC;
 import moa.core.DoubleVector;
 import moa.core.MiscUtils;
 import moa.core.Utils;
@@ -326,18 +327,26 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
     }
 
-    // KENNY
+    /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing(), abordagem diferente do Kenny que
+    utilizava Double.NaN. Alteramos o metodo getInstanceWithRemovedClass original de RC para lidar com apenas 1 instancia
+    por vez. A verificacao da probabilidade de remocao tbm foi levada para o metodo.
+    * */
+
+    // KENNY + VITOR E IGOR
     @Override
     public void trainOnInstanceImpl(Instance inst) {
         Instance newInstance = inst.copy();
+        RC rc = new RC();
 
         this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
         this.removeChance = this.removeChanceChooser.getValue();
 
-        //TROCAR PELO rc.getInstancesWithRemovedClasses
-        if (this.rcEnabled && Math.random() < this.removeChance) {
-            newInstance.setClassValue(newInstance.classIndex(), Double.NaN);
-            this.unlabeledCounter++;
+
+        if (this.rcEnabled) {
+            newInstance = rc.getInstanceWithRemovedClass(newInstance,removeChance);
+            if(newInstance.classIsMissing()){
+                this.unlabeledCounter++;
+            }
         }
 
         if (!Double.isNaN(inst.classValue())) {
