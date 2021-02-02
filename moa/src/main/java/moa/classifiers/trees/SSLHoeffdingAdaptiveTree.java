@@ -145,9 +145,9 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     int c0 = 0;
     int c1 = 0;
 
-    boolean rcEnabled = true;
+    boolean rcEnabled = true; // FALSE
 
-    double removeChance = 0.1;
+    double removeChance = 0.1;  // O.9
 
     int unlabeledCounter = 0;
 
@@ -334,6 +334,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
         this.removeChance = this.removeChanceChooser.getValue();
 
+        //TROCAR PELO rc.getInstancesWithRemovedClasses
         if (this.rcEnabled && Math.random() < this.removeChance) {
             newInstance.setClassValue(newInstance.classIndex(), Double.NaN);
             this.unlabeledCounter++;
