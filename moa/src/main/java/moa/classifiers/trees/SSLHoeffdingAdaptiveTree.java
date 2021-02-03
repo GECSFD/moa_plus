@@ -32,9 +32,9 @@ import moa.core.DoubleVector;
 import moa.core.MiscUtils;
 import moa.core.Utils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.text.DecimalFormat;
+//import java.io.File;
+//import java.io.FileWriter;
+//import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -204,11 +204,13 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         return new AdaSplitNode(splitTest, classObservations);
     }
 
-    // KENNY
+    // KENNY + VITOR e IGOR
     public boolean validateClassIsMissing(Instance inst) {
         double classPred = inst.classValue();
 
         return Double.isNaN(classPred);
+
+
     }
 
     // KENNY
@@ -337,53 +339,34 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     public void trainOnInstanceImpl(Instance inst) {
         Instance newInstance = inst.copy();
         RC rc = new RC();
-
+        Random random = new Random();
         this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
         this.removeChance = this.removeChanceChooser.getValue();
 
 
+//        if(this.rcEnabled && random.nextFloat() < removeChance) {
+////            newInstance.setClassValue(newInstance.classIndex(), Double.NaN);
+////            unlabeledCounter++;
+////        }
+
         if (this.rcEnabled) {
             newInstance = rc.getInstanceWithRemovedClass(newInstance,removeChance);
-            if(newInstance.classIsMissing()){
+            if(this.validateClassIsMissing(newInstance)){
                 this.unlabeledCounter++;
             }
         }
 
-        if (!Double.isNaN(inst.classValue())) {
-            if ((int) inst.classValue() == 0) {
-                this.c0++;
-            } else {
-                this.c1++;
-            }
-        }
+
+
+//        if (!Double.isNaN(inst.classValue())) {
+//            if ((int) inst.classValue() == 0) {
+//                this.c0++;
+//            } else {
+//                this.c1++;
+//            }
+//        }
 
         this.total++;
-
-//        try {
-//            File myObj = new File("C:\\Users\\Kenny\\Downloads\\roc.csv");
-//            if (!myObj.exists()) {
-//                myObj.createNewFile();
-//            }
-//
-//            FileWriter myWriter = new FileWriter("C:\\Users\\Kenny\\Downloads\\roc.csv", true);
-//            String string = this.correct + "," + this.wrong + "," + (this.correct + this.wrong) + "\n";
-//
-//            DecimalFormat df = new DecimalFormat("#.##");
-//
-////            if (this.trueClass.size() > 0) {
-////                for(int i = this.trueClass.size() - 1; i < this.trueClass.size(); i++) {
-////                    string += this.trueClass.get(i) + "," + df.format(this.predictedClass.get(i)) + "\n";
-////                }
-////            }
-//
-////            string = this.c0 + "," + this.c1 + "\n";
-//
-//            if((this.correct + this.wrong) % 1000 == 0)
-//                myWriter.write(string);
-//            myWriter.close();
-//        } catch (java.io.IOException e) {
-//            System.out.println("An error occurred.");
-//        }
 
         int numAttributes = inst.numAttributes() - 1;
 
@@ -416,13 +399,15 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             }
         }
 
+        //Cria raiz
         if (this.treeRoot == null) {
             this.treeRoot = newLearningNode();
             this.activeLeafNodeCount = 1;
         }
-
+        //  ??
         int classIndex = (int) newInstance.classValue();
 
+        //ARRAY QUE GUARDA A QNTD DE INSTANCIAS DE CADA CLASSE
         if (!this.validateClassIsMissing(inst))
             this.classesDistribution.set(classIndex, (int) this.classesDistribution.get(classIndex) + 1);
 
@@ -859,6 +844,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         }
 
         @Override
+        //PRIMEIRA
         public void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
             if (ht.validateClassIsMissing(inst)) {
                 this.rcCounter++;
