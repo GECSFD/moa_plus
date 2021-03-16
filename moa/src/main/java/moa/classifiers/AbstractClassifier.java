@@ -170,7 +170,7 @@ public abstract class AbstractClassifier extends AbstractOptionHandler
     public void trainOnInstance(Instance inst) {
         boolean isTraining = (inst.weight() > 0.0);
         if (this instanceof SemiSupervisedLearner == false &&
-                inst.classIsMissing() == true){
+                inst.classIsMissing()){
             isTraining = false;
         }
         if (isTraining) {

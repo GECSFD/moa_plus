@@ -59,6 +59,7 @@ public class InfoGainSplitCriterion extends AbstractOptionHandler implements
         return Utils.log2(numClasses);
     }
 
+    // !!!!!!
     public static double computeEntropy(double[] dist) {
         double entropy = 0.0;
         double sum = 0.0;

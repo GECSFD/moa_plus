@@ -190,11 +190,14 @@ public class EvaluatePrequential extends ClassificationMainTask implements Capab
         long evaluateStartTime = TimingUtils.getNanoCPUTimeOfCurrentThread();
         long lastEvaluateStartTime = evaluateStartTime;
         double RAMHours = 0.0;
+        int instCounter = 0;
         while (stream.hasMoreInstances()
                 && ((maxInstances < 0) || (instancesProcessed < maxInstances))
                 && ((maxSeconds < 0) || (secondsElapsed < maxSeconds))) {
+            //TESTES
             Example trainInst = stream.nextInstance();
             Example testInst = (Example) trainInst; //.copy();
+            instCounter++;
             //testInst.setClassMissing();
             double[] prediction = learner.getVotesForInstance(testInst);
             // Output prediction
@@ -206,6 +209,7 @@ public class EvaluatePrequential extends ClassificationMainTask implements Capab
 
             //evaluator.addClassificationAttempt(trueClass, prediction, testInst.weight());
             evaluator.addResult(testInst, prediction);
+            // ONDE TUDO COMECA...
             learner.trainOnInstance(trainInst);
             instancesProcessed++;
             if (instancesProcessed % this.sampleFrequencyOption.getValue() == 0

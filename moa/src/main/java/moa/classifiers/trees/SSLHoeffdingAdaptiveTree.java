@@ -27,7 +27,7 @@ import moa.capabilities.ImmutableCapabilities;
 import moa.classifiers.bayes.NaiveBayes;
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
 import moa.classifiers.core.driftdetection.ADWIN;
-import moa.classifiers.trees.iadem.rcutils.RC;
+import moa.classifiers.trees.iadem.SSL.SSLUtils;
 import moa.core.DoubleVector;
 import moa.core.MiscUtils;
 import moa.core.Utils;
@@ -171,6 +171,15 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             0.0,
             1.0);
 
+    //    Choose the chance of removing a class from the GUI
+    public FloatOption levaticWeight = new FloatOption(
+            "levaticWeight",
+            'W',
+            "Levatic's  weigth used in levatic's metric",
+            0.5,
+            0.0,
+            1.0);
+
     /*   public MultiChoiceOption leafpredictionOption = new MultiChoiceOption(
             "leafprediction", 'l', "Leaf prediction to use.", new String[]{
                 "MC", "NB", "NBAdaptive"}, new String[]{
@@ -209,8 +218,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         double classPred = inst.classValue();
 
         return Double.isNaN(classPred);
-
-
     }
 
     // KENNY
@@ -284,7 +291,8 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
     public double impurity(ArrayList classesDistribution, ArrayList attributes) {
         double impurity = 0.0;
-        double w = 0.5;
+        double w = levaticWeight.getValue(); // original = 0.5
+        // deu exception
         int totalLabeled = 0;
 
         for (int i = 0; i < classesDistribution.size(); i++) {
@@ -295,8 +303,8 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         //double entropyLabeledTraining = this.entropy(this.classesDistribution, this.totalLabeled);
         double supervised = w * entropyLabeled;*/}
 
-        double giniLabeled = this.gini(classesDistribution, totalLabeled);
-        double giniLabeledTraining = this.gini(this.classesDistribution, this.totalLabeled);
+        double giniLabeled = this.gini(classesDistribution, totalLabeled); //supostamente apenas rotulados
+        double giniLabeledTraining = this.gini(this.classesDistribution, this.totalLabeled); // conjunto total
         double supervised = w * (giniLabeled / giniLabeledTraining);
 
         int numAttributes = attributes.size();
@@ -329,7 +337,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
     }
 
-    /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing(), abordagem diferente do Kenny que
+    /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing().
     utilizava Double.NaN. Alteramos o metodo getInstanceWithRemovedClass original de RC para lidar com apenas 1 instancia
     por vez. A verificacao da probabilidade de remocao tbm foi levada para o metodo.
     * */
@@ -338,8 +346,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     @Override
     public void trainOnInstanceImpl(Instance inst) {
         Instance newInstance = inst.copy();
-        RC rc = new RC();
-        Random random = new Random();
+        SSLUtils SSLUtils = new SSLUtils();
         this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
         this.removeChance = this.removeChanceChooser.getValue();
 
@@ -350,12 +357,11 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 ////        }
 
         if (this.rcEnabled) {
-            newInstance = rc.getInstanceWithRemovedClass(newInstance,removeChance);
+            newInstance = SSLUtils.getInstanceWithRemovedClass(newInstance,removeChance);
             if(this.validateClassIsMissing(newInstance)){
                 this.unlabeledCounter++;
             }
         }
-
 
 
 //        if (!Double.isNaN(inst.classValue())) {
@@ -844,15 +850,15 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         }
 
         @Override
-        //PRIMEIRA
         public void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
             if (ht.validateClassIsMissing(inst)) {
                 this.rcCounter++;
                 DoubleVector newOb = new DoubleVector();
 
                 double total = 0;
+                int numClasses = inst.numClasses();
 
-                for (int i = 0; i < inst.numClasses(); i++) {
+                for (int i = 0; i < numClasses; i++) {
                     total += this.observedClassDistribution.getValue(i);
                 }
 
@@ -968,7 +974,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
                 ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
-
 
             //learnFromInstance alternate Tree and Child nodes
 			/*if (this.alternateTree != null)  {

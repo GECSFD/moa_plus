@@ -357,7 +357,7 @@ public class HoeffdingAdaptiveTree extends HoeffdingTree {
 
         @Override
         public void learnFromInstance(Instance inst, HoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
-            int trueClass = (int) inst.classValue();
+             int trueClass = (int) inst.classValue();
             //New option vore
             int k = MiscUtils.poisson(1.0, this.classifierRandom);
             Instance weightedInst = (Instance) inst.copy();
