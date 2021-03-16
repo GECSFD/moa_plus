@@ -482,7 +482,7 @@ public class InstanceImpl implements MultiLabelInstance {
         this.setValue(index, value);
     }
 
-    //VITOR
+    //VITOR e IGOR
     @Override
     public void setClassMissing() {
 
