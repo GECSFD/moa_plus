@@ -3,16 +3,24 @@
 
 1. Build using Meaven
 ```bash
- mvn clean package
+ mvn clean package -DskipTests
 ```
 
-2. Training an Evaluating example from the built jar
+2.1 Training an Evaluating example from the built jar
 ```bash
 java -cp moa/target/moa-2020.07.2-SNAPSHOT.jar moa.DoTask \
   "EvaluateModel -m (LearnModel -l trees.HoeffdingTree \
   -s generators.WaveformGenerator -m 1000000) \
 -s (generators.WaveformGenerator -i 2) -i 1000000"
 ```
+
+2.2 Using Python Scrip
+```
+cd results
+python3 main_result_extractor.py
+```
+Then the results of the runnings will be on 'result.txt' file.
+
 
 # MOA (Massive Online Analysis)
 [![Build Status](https://travis-ci.org/Waikato/moa.svg?branch=master)](https://travis-ci.org/Waikato/moa)
