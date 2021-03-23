@@ -25,6 +25,7 @@ import com.yahoo.labs.samoa.instances.Instance;
 import moa.capabilities.Capability;
 import moa.capabilities.ImmutableCapabilities;
 import moa.classifiers.bayes.NaiveBayes;
+import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
 import moa.classifiers.core.driftdetection.ADWIN;
 import moa.classifiers.trees.iadem.SSL.SSLUtils;
@@ -289,6 +290,21 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         return variance;
     }
 
+    public AttributeSplitSuggestion myImpurity(ArrayList classesDistribution, ArrayList attributes){
+        AttributeSplitSuggestion bestSuggestions = null;
+
+        double impurity = 0.0;
+        double w = levaticWeight.getValue();
+
+        for(int i = 0;i< classesDistribution.size();i++){
+            totalLabeled += (int) classesDistribution.get(i);
+        }
+
+        double giniLabeled = this.gini(classesDistribution,totalLabeled);
+
+        return bestSuggestions;
+    }
+
     public double impurity(ArrayList classesDistribution, ArrayList attributes) {
         double impurity = 0.0;
         double w = levaticWeight.getValue(); // original = 0.5
@@ -305,6 +321,8 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
         double giniLabeled = this.gini(classesDistribution, totalLabeled); //supostamente apenas rotulados
         double giniLabeledTraining = this.gini(this.classesDistribution, this.totalLabeled); // conjunto total
+
+        //E1
         double supervised = w * (giniLabeled / giniLabeledTraining);
 
         int numAttributes = attributes.size();
@@ -315,6 +333,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             Attribute att = (Attribute) attributes.get(i);
             Attribute treeAttribute = (Attribute) this.attributes.get(i);
 
+            //Eu
             if (att.getType() == "nominal") {
                 double giniNode = this.gini(att.getAppearances(), att.getAppearancesCount());
                 double giniTree = this.gini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
@@ -331,10 +350,12 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         }
 
         semisupervised = ((1-w) / numAttributes) * sslimpurity;
-
         impurity = supervised + semisupervised;
 
-        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
+        //Comentada
+//        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
+
+        return impurity;
     }
 
     /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing().

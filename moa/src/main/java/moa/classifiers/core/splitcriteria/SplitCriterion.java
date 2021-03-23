@@ -43,7 +43,7 @@ public interface SplitCriterion extends OptionHandler {
      * @return value of the merit of splitting
      */
 
-    // !!!
+    // !!! Interface implementada pelos criterios. No caso , o escolhido eh InfoGain
     public double getMeritOfSplit(double[] preSplitDist,
             double[][] postSplitDists);
 

@@ -45,11 +45,12 @@ public class InfoGainSplitCriterion extends AbstractOptionHandler implements
             0.01, 0.0, 0.5);
 
     @Override
-    public double getMeritOfSplit(double[] preSplitDist,
-            double[][] postSplitDists) {
+    public double getMeritOfSplit(double[] preSplitDist, double[][] postSplitDists) {
+
         if (numSubsetsGreaterThanFrac(postSplitDists, this.minBranchFracOption.getValue()) < 2) {
             return Double.NEGATIVE_INFINITY;
         }
+        // Entropia
         return computeEntropy(preSplitDist) - computeEntropy(postSplitDists);
     }
 
@@ -59,7 +60,7 @@ public class InfoGainSplitCriterion extends AbstractOptionHandler implements
         return Utils.log2(numClasses);
     }
 
-    // !!!!!!
+    // Faz sentido comparar entao valores relacionados a entropia com a impureza?
     public static double computeEntropy(double[] dist) {
         double entropy = 0.0;
         double sum = 0.0;
@@ -71,7 +72,7 @@ public class InfoGainSplitCriterion extends AbstractOptionHandler implements
         }
         return sum > 0.0 ? (entropy + sum * Utils.log2(sum)) / sum : 0.0;
     }
-
+    //Esta funcao vem antes,entao chama a de cima
     public static double computeEntropy(double[][] dists) {
         double totalWeight = 0.0;
         double[] distWeights = new double[dists.length];
