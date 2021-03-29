@@ -25,10 +25,9 @@ import com.yahoo.labs.samoa.instances.Instance;
 import moa.capabilities.Capability;
 import moa.capabilities.ImmutableCapabilities;
 import moa.classifiers.bayes.NaiveBayes;
-import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
 import moa.classifiers.core.driftdetection.ADWIN;
-import moa.classifiers.trees.iadem.SSL.SSLUtils;
+import moa.classifiers.trees.iadem.SSL.*;
 import moa.core.DoubleVector;
 import moa.core.MiscUtils;
 import moa.core.Utils;
@@ -61,70 +60,7 @@ import java.util.Random;
  * @version $Revision: 7 $
  */
 
-class Attribute {
-    private String name;
-    private String type;
-    private int count;
-    private double sum;
-    private ArrayList values;
-    private ArrayList appearances;
-    private int appearancesCount;
 
-    public Attribute(final String name, final String type, final int count, final double sum, ArrayList appearances) {
-        this.name = name;
-        this.type = type;
-        this.count = count;
-        this.sum = sum;
-        this.values = new ArrayList<>();
-        this.appearances = appearances;
-        this.appearancesCount = 0;
-    }
-
-    public String getName() { return this.name; }
-    public String getType() { return this.type; }
-    public int getCount() { return this.count; }
-    public double getSum() { return this.sum; }
-
-    public int getAppearancesCount() {
-        return appearancesCount;
-    }
-
-    public void setAppearancesCount(int appearancesCount) {
-        this.appearancesCount = appearancesCount;
-    }
-
-    public ArrayList getAppearances() {
-        return appearances;
-    }
-
-    public ArrayList getValues() {
-        return values;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setSum(double sum) {
-        this.sum = sum;
-    }
-
-    public void setValues(ArrayList values) {
-        this.values = values;
-    }
-
-    public void setAppearances(ArrayList appearances) {
-        this.appearances = appearances;
-    }
-}
 
 public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
@@ -132,6 +68,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     protected int alternateTrees;
 
     // KENNY
+    // Made classesDistribution and totallabeled public
     int totalLabeled;
     int totalUnlabeled;
     ArrayList classesDistribution = new ArrayList();
@@ -172,14 +109,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             0.0,
             1.0);
 
-    //    Choose the chance of removing a class from the GUI
-    public FloatOption levaticWeight = new FloatOption(
-            "levaticWeight",
-            'W',
-            "Levatic's  weigth used in levatic's metric",
-            0.5,
-            0.0,
-            1.0);
 
     /*   public MultiChoiceOption leafpredictionOption = new MultiChoiceOption(
             "leafprediction", 'l', "Leaf prediction to use.", new String[]{
@@ -214,6 +143,31 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         return new AdaSplitNode(splitTest, classObservations);
     }
 
+    public int getTotalLabeled() {
+        return totalLabeled;
+    }
+
+    public void setTotalLabeled(int totalLabeled) {
+        this.totalLabeled = totalLabeled;
+    }
+
+    public ArrayList getClassesDistribution() {
+        return classesDistribution;
+    }
+
+    public void setClassesDistribution(ArrayList classesDistribution) {
+        this.classesDistribution = classesDistribution;
+    }
+
+    public ArrayList<Attribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(ArrayList<Attribute> attributes) {
+        this.attributes = attributes;
+    }
+
+
     // KENNY + VITOR e IGOR
     public boolean validateClassIsMissing(Instance inst) {
         double classPred = inst.classValue();
@@ -233,130 +187,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         ((NewNode) this.treeRoot).learnFromInstance(inst, this, null, -1);
     }
 
-    // KENNY
-    public static double entropy(ArrayList classesDistribution, int totalAppearances) {
-        int numClasses = (int) classesDistribution.size();
-        double entropy = 0.0;
-        double probability = 0.0;
-        double log = 0.0;
 
-        for (int i = 0; i < numClasses; i++) {
-            int distribution = (int) classesDistribution.get(i);
-
-            probability = (double) distribution / totalAppearances;
-            log = Math.log(probability);
-
-            entropy -= probability * log;
-        }
-
-        return entropy;
-    }
-
-    // KENNY
-    public double gini(ArrayList classesDistribution, int totalAppearances) {
-        int numClasses = (int) classesDistribution.size();
-        double summation = 0.0;
-        double probability = 0.0;
-
-        for (int i = 0; i < numClasses; i++) {
-            int distribution = (int) classesDistribution.get(i);
-
-            if (totalAppearances != 0) {
-                probability = (double) distribution / totalAppearances;
-                probability = probability * probability;
-            } else {
-                probability = 0;
-            }
-
-            summation += probability;
-        }
-
-        return (1 - summation);
-    }
-
-    public double variance(ArrayList oldData, double sum, int totalCount) {
-        double variance = 0.0;
-        double rightSide = (sum * sum) / totalCount;
-        double leftSide = 0.0;
-
-        for (int j = 0; j < oldData.size(); j++) {
-            double val = (double) oldData.get(j);
-
-            leftSide = leftSide + (val * val);
-        }
-
-        variance = (leftSide - rightSide) / totalCount;
-
-        return variance;
-    }
-
-    public AttributeSplitSuggestion myImpurity(ArrayList classesDistribution, ArrayList attributes){
-        AttributeSplitSuggestion bestSuggestions = null;
-
-        double impurity = 0.0;
-        double w = levaticWeight.getValue();
-
-        for(int i = 0;i< classesDistribution.size();i++){
-            totalLabeled += (int) classesDistribution.get(i);
-        }
-
-        double giniLabeled = this.gini(classesDistribution,totalLabeled);
-
-        return bestSuggestions;
-    }
-
-    public double impurity(ArrayList classesDistribution, ArrayList attributes) {
-        double impurity = 0.0;
-        double w = levaticWeight.getValue(); // original = 0.5
-        // deu exception
-        int totalLabeled = 0;
-
-        for (int i = 0; i < classesDistribution.size(); i++) {
-            totalLabeled += (int) classesDistribution.get(i);
-        }
-
-        {/*double entropyLabeled = this.entropy(classesDistribution, totalLabeled);
-        //double entropyLabeledTraining = this.entropy(this.classesDistribution, this.totalLabeled);
-        double supervised = w * entropyLabeled;*/}
-
-        double giniLabeled = this.gini(classesDistribution, totalLabeled); //supostamente apenas rotulados
-        double giniLabeledTraining = this.gini(this.classesDistribution, this.totalLabeled); // conjunto total
-
-        //E1
-        double supervised = w * (giniLabeled / giniLabeledTraining);
-
-        int numAttributes = attributes.size();
-        double semisupervised = 0.0;
-        double sslimpurity = 0.0;
-
-        for (int i = 0; i < numAttributes; i++) {
-            Attribute att = (Attribute) attributes.get(i);
-            Attribute treeAttribute = (Attribute) this.attributes.get(i);
-
-            //Eu
-            if (att.getType() == "nominal") {
-                double giniNode = this.gini(att.getAppearances(), att.getAppearancesCount());
-                double giniTree = this.gini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
-
-                sslimpurity += giniNode/giniTree;
-            } else if (att.getType() == "numeric") {
-                double varianceNode = this.variance(att.getValues(), att.getSum(), att.getCount());
-                double varianceTree = this.variance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
-
-                sslimpurity += varianceNode/varianceTree;
-            } else {
-                continue;
-            }
-        }
-
-        semisupervised = ((1-w) / numAttributes) * sslimpurity;
-        impurity = supervised + semisupervised;
-
-        //Comentada
-//        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
-
-        return impurity;
-    }
 
     /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing().
     utilizava Double.NaN. Alteramos o metodo getInstanceWithRemovedClass original de RC para lidar com apenas 1 instancia
@@ -991,8 +822,10 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             //Check for Split condition
             double weightSeen = this.getWeightSeen();
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
-                impurity = ht.impurity(this.classesDistribution, this.attributes);
-                ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
+                //impurity = ht.impurity(this.classesDistribution, this.attributes);
+                //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
+                //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
+
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 

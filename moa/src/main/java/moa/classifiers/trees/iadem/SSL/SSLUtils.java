@@ -65,30 +65,6 @@ public class SSLUtils implements Serializable {
      * @param iterator the iterator for numAttributes
      * @return the attribute
      */
-    public Attribute setAttributesArray(Instance instance,int iterator){
-
-        com.yahoo.labs.samoa.instances.Attribute att = instance.attribute(iterator);
-        String type = "";
-        String name = att.name();
-        List nominalValues = att.getAttributeValues();
-        ArrayList appearances = new ArrayList();
-
-        if (att.isNominal()) {
-            type = "nominal";
-                for (int j = 0; j < nominalValues.size(); j++) {
-                    appearances.add(0);
-                }
-
-            }
-        else if (att.isNumeric()) {
-            type = "numeric";
-        }
-
-        //Criou um atributo com o nome e tipo. APPEARANCES eh um array com tamanho m = nmr_valores_atributos
-        // e de valor 0, se o atributo foi nominal
-        return new Attribute((String) name, type, 0, 0, appearances);
-
-    }
 }
 
 

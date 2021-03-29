@@ -19,6 +19,7 @@
  */
 package moa.classifiers.core.splitcriteria;
 
+import moa.classifiers.trees.HoeffdingTree;
 import moa.options.OptionHandler;
 
 /**

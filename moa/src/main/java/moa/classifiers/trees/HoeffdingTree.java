@@ -42,6 +42,7 @@ import moa.classifiers.core.attributeclassobservers.DiscreteAttributeClassObserv
 import moa.classifiers.core.attributeclassobservers.NullAttributeClassObserver;
 import moa.classifiers.core.attributeclassobservers.NumericAttributeClassObserver;
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
+import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
 import moa.core.AutoExpandVector;
 import moa.core.DoubleVector;
@@ -473,6 +474,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
             double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
+
             if (ht.noPrePruneOption.isSet()) {
                 // add null split as an option
                 /*
@@ -500,10 +502,8 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
            double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
-
             if (ht.noPrePruneOption.isSet()) {
-                AttributeSplitSuggestion goodSuggestion = new AttributeSplitSuggestion(null, new double[0][],ht.impurity(ht.classesDistribution,ht.attributes));
-                System.out.println("Merit by IMPURITY : " + goodSuggestion.merit);
+                AttributeSplitSuggestion goodSuggestion = new AttributeSplitSuggestion(null, new double[0][],new LevaticImpurityCriterion(ht).getMeritOfSplit(preSplitDist, new double[][]{preSplitDist}));
                 bestSuggestions.add(goodSuggestion);
             }
 
@@ -777,9 +777,8 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
     }
 
-
-     //Vitor
-    protected void attemptToSplit(boolean active,ActiveLearningNode node, SplitNode parent, int parentIndex, double impurity, Instance inst, SSLHoeffdingAdaptiveTree ht) {
+     //Vitor + Igor
+    protected void attemptToSplit(boolean active,ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht) {
         if (!node.observedClassDistributionIsPure()) {
             // Criacao do SplitCriterion  -> splitCriterionOption eh um handler com a o opcoes  (InfoGainCriterion)
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
@@ -796,17 +795,14 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             if (bestSplitSuggestions.length < 2) {
                 shouldSplit = bestSplitSuggestions.length > 0;
             } else {
-                //double hoeffdingBound = computeHoeffdingBound(splitCriterion.getRangeOfMerit(node.getObservedClassDistribution()), this.splitConfidenceOption.getValue(), node.getWeightSeen());
-                double hoeffdingBound = computeHoeffdingBound(impurity, this.splitConfidenceOption.getValue(), node.getWeightSeen());
+                double hoeffdingBound = computeHoeffdingBound(splitCriterion.getRangeOfMerit(node.getObservedClassDistribution()), this.splitConfidenceOption.getValue(), node.getWeightSeen());
 
-                double medida = impurity;
 
                 //Seleciona o ultimo valor do array BestSplitSuggestions que sofreu um SORT
                 AttributeSplitSuggestion bestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 1];
                 AttributeSplitSuggestion secondBestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 2];
 
                 System.out.println("hoeffdingBound : " + hoeffdingBound);
-                System.out.println("Impurity :" + impurity + " medida: " + medida);
                 //System.out.println("bestSuggestion.merit : " + (bestSuggestion.merit));
                 //System.out.println("secondSuggestion.merit : " + (secondBestSuggestion.merit));
 
@@ -816,7 +812,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 //if ((bestSuggestion.merit - secondBestSuggestion.merit > medida) || (medida > this.tieThresholdOption.getValue())) {
 
 
-                if ((impurity < hoeffdingBound) || impurity > this.tieThresholdOption.getValue()) {
+                if ((bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound) || hoeffdingBound > this.tieThresholdOption.getValue()) {
                     System.out.println("ENTROU !");
                     shouldSplit = true;
                 }
@@ -833,7 +829,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
                             if (splitAtts.length == 1) {
                                 // Aqui tbm utilizamos a impureza
-                                if (impurity > hoeffdingBound) {
+                                if (bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound) {
                                     // ??? O que eh isso
                                     poorAtts.add(new Integer(splitAtts[0]));
                                 }
@@ -847,7 +843,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
                             if (splitAtts.length == 1) {
                                 // Aqui tbm utilizamos a impureza
-                                if (impurity > hoeffdingBound) {
+                                if (bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound) {
                                     // ??? O que eh isso
                                     poorAtts.remove(new Integer(splitAtts[0]));
                                 }
