@@ -63,4 +63,6 @@ public class AttributeSplitSuggestion extends AbstractMOAObject implements
     public void getDescription(StringBuilder sb, int indent) {
         // TODO Auto-generated method stub
     }
+
+
 }

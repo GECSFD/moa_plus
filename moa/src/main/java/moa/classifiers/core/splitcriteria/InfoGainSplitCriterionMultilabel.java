@@ -41,6 +41,7 @@ public class InfoGainSplitCriterionMultilabel extends InfoGainSplitCriterion {
         for (double d : dist) {
             sum += d;
         }
+
         if (sum > 0.0) {
             for (double num : dist) {
                 double d = num / sum;

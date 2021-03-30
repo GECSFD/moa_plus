@@ -108,6 +108,14 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             0.1,
             0.0,
             1.0);
+    public FloatOption levaticWeight = new FloatOption(
+            "levaticWeight",
+            'W',
+            "Levatic's  weigth used in levatic's metric",
+            0.5,
+            0.0,
+            1.0);
+
 
 
     /*   public MultiChoiceOption leafpredictionOption = new MultiChoiceOption(
@@ -187,6 +195,121 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         ((NewNode) this.treeRoot).learnFromInstance(inst, this, null, -1);
     }
 
+    // KENNY
+    public static double entropy(ArrayList classesDistribution, int totalAppearances) {
+        int numClasses = (int) classesDistribution.size();
+        double entropy = 0.0;
+        double probability = 0.0;
+        double log = 0.0;
+
+        for (int i = 0; i < numClasses; i++) {
+            int distribution = (int) classesDistribution.get(i);
+
+            probability = (double) distribution / totalAppearances;
+            log = Math.log(probability);
+
+            entropy -= probability * log;
+        }
+
+        return entropy;
+    }
+
+    // KENNY
+    public double gini(ArrayList classesDistribution, int totalAppearances) {
+
+        int numClasses = (int) classesDistribution.size();
+        double summation = 0.0;
+        double probability = 0.0;
+
+        for (int i = 0; i < numClasses; i++) {
+            int distribution = (int) classesDistribution.get(i);
+            if (totalAppearances != 0) {
+                probability = (double) distribution / totalAppearances;
+                probability = probability * probability;
+            } else {
+                probability = 0;
+            }
+
+            summation += probability;
+        }
+
+        return (1 - summation);
+    }
+
+    public double variance(ArrayList oldData, double sum, int totalCount) {
+        double variance = 0.0;
+        double rightSide = (sum * sum) / totalCount;
+        double leftSide = 0.0;
+
+        for (int j = 0; j < oldData.size(); j++) {
+            double val = (double) oldData.get(j);
+
+            leftSide = leftSide + (val * val);
+        }
+
+        variance = (leftSide - rightSide) / totalCount;
+
+        return variance;
+    }
+
+    public double impurity(ArrayList classesDistribution, ArrayList<Attribute> attributes) {
+        double impurity = 0.0;
+        double w = levaticWeight.getValue(); // original = 0.5
+
+        int totalLabeled = 0;
+
+
+        for (int i = 0; i < classesDistribution.size(); i++) {
+            totalLabeled += (int) classesDistribution.get(i);
+        }
+
+        {/*double entropyLabeled = this.entropy(classesDistribution, totalLabeled);
+        //double entropyLabeledTraining = this.entropy(this.classesDistribution, this.totalLabeled);
+        double supervised = w * entropyLabeled;*/}
+
+
+
+        double giniLabeled = this.gini(classesDistribution, totalLabeled); //supostamente apenas rotulados
+        double giniLabeledTraining = this.gini(this.classesDistribution, this.totalLabeled); // conjunto total
+
+        //E1
+
+        double supervised = w * (giniLabeled / giniLabeledTraining);
+
+        int numAttributes = attributes.size();
+        double semisupervised = 0.0;
+        double sslimpurity = 0.0;
+
+
+        for (int i = 0; i < numAttributes; i++) {
+            Attribute att = (Attribute) attributes.get(i);
+            Attribute treeAttribute = (Attribute) this.getAttributes().get(i);
+
+            //Eu
+            if (att.getType() == "nominal") {
+                double giniNode = this.gini(att.getAppearances(), att.getAppearancesCount());
+                double giniTree = this.gini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
+
+                sslimpurity += giniNode/giniTree;
+            } else if (att.getType() == "numeric") {
+                double varianceNode = this.variance(att.getValues(), att.getSum(), att.getCount());
+                double varianceTree = this.variance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
+
+                sslimpurity += varianceNode/varianceTree;
+            } else {
+                continue;
+            }
+        }
+
+        semisupervised = ((1-w) / numAttributes) * sslimpurity;
+        impurity = supervised + semisupervised;
+
+        //Comentada
+//        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
+
+        return impurity;
+    }
+
 
 
     /* ADICIONAMOS A CLASSE RC, QUE FAZ A REMOCAO DA CLASSE A PARTIR DO setClassMissing().
@@ -215,15 +338,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             }
         }
 
-
-//        if (!Double.isNaN(inst.classValue())) {
-//            if ((int) inst.classValue() == 0) {
-//                this.c0++;
-//            } else {
-//                this.c1++;
-//            }
-//        }
-
         this.total++;
 
         int numAttributes = inst.numAttributes() - 1;
@@ -235,6 +349,8 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             classes.forEach(item-> {
                 this.classesDistribution.add((int) 0);
             });
+
+            // ARRAY COM O NUMERO DE CLASSES DA INSTANCIA
 
             for (int i = 0; i < numAttributes; i++) {
                 com.yahoo.labs.samoa.instances.Attribute att = newInstance.attribute(i);
@@ -703,6 +819,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
         @Override
         public void learnFromInstance(Instance inst, SSLHoeffdingAdaptiveTree ht, SplitNode parent, int parentBranch) {
+
             if (ht.validateClassIsMissing(inst)) {
                 this.rcCounter++;
                 DoubleVector newOb = new DoubleVector();
@@ -824,7 +941,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
                 //impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes);
 
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }

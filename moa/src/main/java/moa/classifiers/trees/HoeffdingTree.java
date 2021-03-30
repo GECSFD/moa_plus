@@ -19,12 +19,8 @@
  */
 package moa.classifiers.trees;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
 import com.github.javacliparser.FlagOption;
 import com.github.javacliparser.FloatOption;
 import com.github.javacliparser.IntOption;
@@ -44,6 +40,7 @@ import moa.classifiers.core.attributeclassobservers.NumericAttributeClassObserve
 import moa.classifiers.core.conditionaltests.InstanceConditionalTest;
 import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
+import moa.classifiers.trees.iadem.SSL.Attribute;
 import moa.core.AutoExpandVector;
 import moa.core.DoubleVector;
 import moa.core.Measurement;
@@ -474,7 +471,6 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
             double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
-
             if (ht.noPrePruneOption.isSet()) {
                 // add null split as an option
                 /*
@@ -489,6 +485,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 if (obs != null) {
                     AttributeSplitSuggestion bestSuggestion = obs.getBestEvaluatedSplitSuggestion(criterion,
                             preSplitDist, i, ht.binarySplitsOption.isSet());
+
                     if (bestSuggestion != null) {
                         bestSuggestions.add(bestSuggestion);
                     }
@@ -498,12 +495,23 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
 
         // Impurity measures
-        public AttributeSplitSuggestion[]getBestSplitSuggestions(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht) {
+        public AttributeSplitSuggestion[]getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,ArrayList classesDistribution,ArrayList<Attribute> attributes) {
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
-           double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
+            LevaticImpurityCriterion crit = null;
+
+            if(criterion instanceof LevaticImpurityCriterion){
+                //System.out.println("foi");
+                crit = (LevaticImpurityCriterion) criterion;
+                crit.setHt(ht);
+                crit.setClassesDistribution(classesDistribution);
+                crit.setAttributes(attributes);
+            }
+
+            double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
+
             if (ht.noPrePruneOption.isSet()) {
-                AttributeSplitSuggestion goodSuggestion = new AttributeSplitSuggestion(null, new double[0][],new LevaticImpurityCriterion(ht).getMeritOfSplit(preSplitDist, new double[][]{preSplitDist}));
+                AttributeSplitSuggestion goodSuggestion = new AttributeSplitSuggestion(null, new double[0][],crit.getMeritOfSplit(preSplitDist, new double[][]{preSplitDist}));
                 bestSuggestions.add(goodSuggestion);
             }
 
@@ -778,12 +786,12 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
     }
 
      //Vitor + Igor
-    protected void attemptToSplit(boolean active,ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht) {
+    protected void attemptToSplitSSL(ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht, ArrayList classesDistribution, ArrayList<moa.classifiers.trees.iadem.SSL.Attribute> attributes) {
         if (!node.observedClassDistributionIsPure()) {
             // Criacao do SplitCriterion  -> splitCriterionOption eh um handler com a o opcoes  (InfoGainCriterion)
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
             // Chamada da getBestSplitSugestion passando o splitCriterion
-            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestions(splitCriterion,ht);
+            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestionsSSL(splitCriterion,ht,classesDistribution,attributes);
             // Vetor ordenado ( Por que ?? )
             //AttributeSplitSuggestion[] preBestSplitSuggestions = node.getBestSplitSuggestions(splitCriterion, this);
             Arrays.sort(bestSplitSuggestions);
@@ -802,7 +810,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 AttributeSplitSuggestion bestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 1];
                 AttributeSplitSuggestion secondBestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 2];
 
-                System.out.println("hoeffdingBound : " + hoeffdingBound);
+               // System.out.println("hoeffdingBound : " + hoeffdingBound);
                 //System.out.println("bestSuggestion.merit : " + (bestSuggestion.merit));
                 //System.out.println("secondSuggestion.merit : " + (secondBestSuggestion.merit));
 
@@ -813,11 +821,11 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
 
                 if ((bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound) || hoeffdingBound > this.tieThresholdOption.getValue()) {
-                    System.out.println("ENTROU !");
+                  //  System.out.println("ENTROU !");
                     shouldSplit = true;
                 }
                 else{
-                    System.out.println("Falhou");
+                    //System.out.println("Falhou");
                 }
 
                 if ((this.removePoorAttsOption != null) && this.removePoorAttsOption.isSet()) {
