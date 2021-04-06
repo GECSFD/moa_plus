@@ -74,6 +74,9 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     ArrayList classesDistribution = new ArrayList();
     ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 
+    //Vitor
+    ArrayList<Instance> instances = new ArrayList<Instance>();
+
     int correct = 0;
     int wrong = 0;
     int total = 0;
@@ -321,6 +324,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
     @Override
     public void trainOnInstanceImpl(Instance inst) {
         Instance newInstance = inst.copy();
+        instances.add(newInstance);
         SSLUtils SSLUtils = new SSLUtils();
         this.rcEnabled = this.rcChooser.getChosenIndex() == 0;
         this.removeChance = this.removeChanceChooser.getValue();
@@ -933,16 +937,15 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
                 this.ErrorChange = false;
             }
 
-            //Update statistics
+            //Update statistics  // AQUI ESTA A TENDENCIA A PRIMEIRA CLASSE
             learnFromInstance(weightedInst, ht);    //newInstance
 
             //Check for Split condition
             double weightSeen = this.getWeightSeen();
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
-                //impurity = ht.impurity(this.classesDistribution, this.attributes);
+                impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes);
-
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes,ht.instances);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 

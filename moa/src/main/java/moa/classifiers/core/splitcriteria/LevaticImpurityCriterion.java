@@ -20,12 +20,14 @@
 package moa.classifiers.core.splitcriteria;
 
 import com.github.javacliparser.FloatOption;
+import com.yahoo.labs.samoa.instances.Instance;
 import moa.classifiers.trees.SSLHoeffdingAdaptiveTree;
 import moa.classifiers.trees.iadem.SSL.Attribute;
 import moa.core.ObjectRepository;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 import java.util.ArrayList;
+import java.util.Collections;
 
 
 /**
@@ -41,8 +43,14 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         SplitCriterion {
 
     SSLHoeffdingAdaptiveTree ht;
+    // VALORES DO NODO
     ArrayList classesDistribution = new ArrayList();
     ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+    ArrayList<Instance> processedInstances = new ArrayList<Instance>();
+
+    public void setProcessedInstances(ArrayList<Instance> processedInstances) {
+        this.processedInstances = processedInstances;
+    }
 
     public SSLHoeffdingAdaptiveTree getHt() {
         return ht;
@@ -80,7 +88,6 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 //                System.out.println("Post : "+postSplitDists[i][j]);
 //            }
 //        }
-
         /*
             Considerando Pre-Post:
                 se res < 0 => Split RUIM!
@@ -90,16 +97,49 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                 se res > 0 = SPLIT RUIM!
 
             PENSAR NISSO AO COMPARAR
+        */
+
+//        System.out.println("HT.CLASSES-DISTR:");
+//        System.out.println(ht.getClassesDistribution());
+//
+//        System.out.println("NODE.CLASSES-DIST:");
+//        System.out.println(classesDistribution);
+//
+//        System.out.println("PRE SPLIT:");
+//        for(int i = 0; i < preSplitDist.length;i++){
+//            System.out.println(preSplitDist[i]);
+//        }
+
+//        System.out.println("POST SPLIT:");
+//        for(int i = 0; i < postSplitDists.length;i++){
+//            for(int j = 0;i < postSplitDists.length;i++){
+//                System.out.println(postSplitDists[i][j]);
+//            }
+//        }
+
+        // igual ao valor que era antigamente passado por parametro
+        double impurityPreSplit = impurity(this.classesDistribution,this.attributes); // impurity(preSplit) - impurity(postSplit)
+
+        //System.out.println(postSplitDists.length);
+        ArrayList<Double> impuritys = new ArrayList<Double>();
+
+        for (int i = 0;i<postSplitDists.length;i++){
+            ArrayList postDistribution= new ArrayList();
+
+            for(int j = 0;j<postSplitDists[i].length;j++){
+                postDistribution.add((int)postSplitDists[i][j]);
+            }
+             impuritys.add(impurity(postDistribution,ht.getAttributes()));
+        }
+
+        /*
+
          */
-
-        System.out.println(ht.getClassesDistribution());
-        System.out.println(classesDistribution);
-        System.out.println(postSplitDists);
-        System.out.println(preSplitDist);
+        Collections.sort(impuritys);
+        double impurityPostSplit = impuritys.get(0);
 
 
-        return impurity(this.classesDistribution,this.attributes);
-
+        return impurityPreSplit - impurityPostSplit;
     }
 
     public double getRangeOfMerit(double[] preSplitDist) {
@@ -141,6 +181,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         double summation = 0.0;
         double probability = 0.0;
 
+
         for (int i = 0; i < numClasses; i++) {
             int distribution = (int) classesDistribution.get(i);
             if (totalAppearances != 0) {
@@ -177,11 +218,9 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
         int totalLabeled = 0;
 
-
         for (int i = 0; i < classesDistribution.size(); i++) {
             totalLabeled += (int) classesDistribution.get(i);
         }
-
 
         //Testes
 
@@ -190,13 +229,11 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         double supervised = w * entropyLabeled;*/}
 
 
-
         double giniLabeled = this.gini(classesDistribution,totalLabeled); //supostamente apenas rotulados
         double giniLabeledTraining = this.gini(ht.getClassesDistribution(),ht.getTotalLabeled()); // conjunto total
 
         //E1
-        double supervised = 0;
-        //double supervised = w * (giniLabeled / giniLabeledTraining);
+        double supervised = w * (giniLabeled / giniLabeledTraining);
 
         int numAttributes = attributes.size();
         double semisupervised = 0.0;

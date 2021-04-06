@@ -90,6 +90,8 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
         int maxAttValsObserved = getMaxAttValsObserved();
         if (!binaryOnly) {
             double[][] postSplitDists = getClassDistsResultingFromMultiwaySplit(maxAttValsObserved);
+            System.out.println(postSplitDists.length);
+
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             bestSuggestion = new AttributeSplitSuggestion(
@@ -122,6 +124,7 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
 
     public double[][] getClassDistsResultingFromMultiwaySplit(
             int maxAttValsObserved) {
+
         DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
         for (int i = 0; i < resultingDists.length; i++) {
             resultingDists[i] = new DoubleVector();

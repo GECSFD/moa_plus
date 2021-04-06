@@ -97,6 +97,8 @@ public class GaussianNumericAttributeClassObserver extends AbstractOptionHandler
 
         for (double splitValue : suggestedSplitValues) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(splitValue);
+
+            //!!!!!
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {
