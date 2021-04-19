@@ -3,6 +3,7 @@ package moa.classifiers.core.attributeclassobservers;
 import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.NominalAttributeBinaryTest;
 import moa.classifiers.core.conditionaltests.NominalAttributeMultiwayTest;
+import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
 import moa.core.AutoExpandVector;
 import moa.core.DoubleVector;
@@ -11,6 +12,14 @@ import moa.core.Utils;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 
+/**
+ * Class for observing the class and attribute data distribution for a nominal attribute.
+ * This observer monitors the class and the attributes distribution of a given attribute.
+ * Used in naive Bayes and decision trees to monitor data statistics on leaves.
+ *
+ * @author Igor Froehner e Vitor Clemes
+ * @version $Revision: 1 $
+ */
 public class SSLNominalAttributeClassObserver extends AbstractOptionHandler implements
         DiscreteAttributeClassObserver {
 
@@ -21,6 +30,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     protected double missingWeightObserved = 0.0;
 
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
+    public AutoExpandVector<DoubleVector> attValDistPerAttribute = new AutoExpandVector<>();
 
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
@@ -62,6 +72,13 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         int maxAttValsObserved = getMaxAttValsObserved();
         if (!binaryOnly) {
             double[][] postSplitDists = getClassDistsResultingFromMultiwaySplit(maxAttValsObserved);
+
+            double[][] postAttSplitDists = getAttributeDistResultingFromMultiwaySplit(maxAttValsObserved);
+            if (criterion instanceof LevaticImpurityCriterion){
+//                TODO: Passar os atributos para o critério
+                ((LevaticImpurityCriterion) criterion).setAttributes(null);
+            }
+
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             bestSuggestion = new AttributeSplitSuggestion(
@@ -70,6 +87,13 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         }
         for (int valIndex = 0; valIndex < maxAttValsObserved; valIndex++) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(valIndex);
+
+            double[][] postAttSplitDist = getAttributeDistResultingFromBinarySplit(valIndex);
+            if (criterion instanceof LevaticImpurityCriterion){
+//                TODO: Passar os atributos para o critério
+                ((LevaticImpurityCriterion) criterion).setAttributes(null);
+            }
+
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {
@@ -92,6 +116,11 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         return maxAttValsObserved;
     }
 
+    public double[][] getAttributeDistResultingFromMultiwaySplit(int valIndex) {
+//        TODO: Criar a distribuição dos atributos se splitar multiway
+        return null;
+    }
+
     public double[][] getClassDistsResultingFromMultiwaySplit(
             int maxAttValsObserved) {
         DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
@@ -111,6 +140,11 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
             distributions[i] = resultingDists[i].getArrayRef();
         }
         return distributions;
+    }
+
+    public double[][] getAttributeDistResultingFromBinarySplit(int valIndex) {
+//        TODO: Criar a distribuição dos atributos se splitar binario
+        return null;
     }
 
     public double[][] getClassDistsResultingFromBinarySplit(int valIndex) {

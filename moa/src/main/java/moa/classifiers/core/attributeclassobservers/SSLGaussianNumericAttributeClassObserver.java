@@ -3,6 +3,7 @@ package moa.classifiers.core.attributeclassobservers;
 import com.github.javacliparser.IntOption;
 import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.NumericAttributeBinaryTest;
+import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
 import moa.core.*;
 import moa.options.AbstractOptionHandler;
@@ -11,6 +12,14 @@ import moa.tasks.TaskMonitor;
 import java.util.Set;
 import java.util.TreeSet;
 
+/**
+ * Class for observing the class and attributes data distribution for a numeric attribute using gaussian estimators.
+ * This observer monitors the class and attributes distribution of a given attribute.
+ * Used in naive Bayes and decision trees to monitor data statistics on leaves.
+ *
+ * @author Igor Froehner e Vitor Clemes
+ * @version $Revision: 1 $
+ */
 public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHandler
         implements NumericAttributeClassObserver {
 
@@ -21,6 +30,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     protected DoubleVector maxValueObservedPerClass = new DoubleVector();
 
     protected AutoExpandVector<GaussianEstimator> attValDistPerClass = new AutoExpandVector<GaussianEstimator>();
+    protected AutoExpandVector<GaussianEstimator> attValDistPerAtt = new AutoExpandVector<>();
 
     public IntOption numBinsOption = new IntOption("numBins", 'n',
             "The number of bins.", 10, 1, Integer.MAX_VALUE);
@@ -62,6 +72,13 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
         double[] suggestedSplitValues = getSplitPointSuggestions();
         for (double splitValue : suggestedSplitValues) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(splitValue);
+
+            double[][] postAttSplitDists = getAttributeDistResultingFromBinarySplit(splitValue);
+            if (criterion instanceof LevaticImpurityCriterion){
+//                TODO: Passar os atributos para o critério
+                ((LevaticImpurityCriterion) criterion).setAttributes(null);
+            }
+
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {
@@ -104,6 +121,11 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
             suggestions[i++] = suggestion;
         }
         return suggestions;
+    }
+
+    public double[][] getAttributeDistResultingFromBinarySplit(double splitValue) {
+//        TODO: implementar isso aqui
+        return null;
     }
 
     // assume all values equal to splitValue go to lhs
