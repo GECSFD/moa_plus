@@ -44,6 +44,12 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
 
     private static final long serialVersionUID = 1L;
 
+//    protected String attName = null;
+//
+//    public void setName(String attName){
+//        this.attName = attName;
+//    }
+
     protected double totalWeightObserved = 0.0;
 
     protected double missingWeightObserved = 0.0;
@@ -52,6 +58,10 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
 
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
+
+        // attVall = valor do atributo ("posicao")
+        // classVal = valor da classe ("posicao")
+        // DOUBLE VEC = POR FORA CLASSE, POR DENTRO ATRIBUTO
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {
@@ -61,10 +71,13 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                 valDist = new DoubleVector();
                 this.attValDistPerClass.set(classVal, valDist);
             }
+
             valDist.addToValue(attValInt, weight);
         }
         this.totalWeightObserved += weight;
     }
+
+
 
     @Override
     public double probabilityOfAttributeValueGivenClass(double attVal,
@@ -86,11 +99,12 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
     public AttributeSplitSuggestion getBestEvaluatedSplitSuggestion(
             SplitCriterion criterion, double[] preSplitDist, int attIndex,
             boolean binaryOnly) {
+
         AttributeSplitSuggestion bestSuggestion = null;
         int maxAttValsObserved = getMaxAttValsObserved();
         if (!binaryOnly) {
             double[][] postSplitDists = getClassDistsResultingFromMultiwaySplit(maxAttValsObserved);
-            System.out.println(postSplitDists.length);
+            //System.out.println(postSplitDists.length);
 
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
@@ -122,9 +136,9 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
         return maxAttValsObserved;
     }
 
+    //copiar
     public double[][] getClassDistsResultingFromMultiwaySplit(
             int maxAttValsObserved) {
-
         DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
         for (int i = 0; i < resultingDists.length; i++) {
             resultingDists[i] = new DoubleVector();
@@ -137,12 +151,14 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                 }
             }
         }
+
         double[][] distributions = new double[maxAttValsObserved][];
         for (int i = 0; i < distributions.length; i++) {
             distributions[i] = resultingDists[i].getArrayRef();
         }
         return distributions;
     }
+    // post-distribution das classes
 
     public double[][] getClassDistsResultingFromBinarySplit(int valIndex) {
         DoubleVector equalsDist = new DoubleVector();

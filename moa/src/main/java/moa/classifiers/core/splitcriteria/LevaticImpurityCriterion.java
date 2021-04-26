@@ -24,6 +24,7 @@ import com.yahoo.labs.samoa.instances.Instance;
 import moa.classifiers.trees.SSLHoeffdingAdaptiveTree;
 import moa.classifiers.trees.iadem.SSL.Attribute;
 import moa.core.ObjectRepository;
+import moa.core.Utils;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 import java.util.ArrayList;
@@ -44,13 +45,11 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
     SSLHoeffdingAdaptiveTree ht;
     // VALORES DO NODO
-    ArrayList classesDistribution = new ArrayList();
-    ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+    ArrayList classesDistribution = new ArrayList();   // preSplitDist
+    ArrayList<Attribute> preSplitAttributesDist = new ArrayList<Attribute>();
+    double [][] postSplitAttributesDist = null;
     ArrayList<Instance> processedInstances = new ArrayList<Instance>();
 
-    public void setProcessedInstances(ArrayList<Instance> processedInstances) {
-        this.processedInstances = processedInstances;
-    }
 
     public SSLHoeffdingAdaptiveTree getHt() {
         return ht;
@@ -64,8 +63,12 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         this.classesDistribution = classesDistribution;
     }
 
-    public void setAttributes(ArrayList attributes) {
-        this.attributes = attributes;
+    public void setPreSplitAttributesDist(ArrayList attributes) {
+        this.preSplitAttributesDist = attributes;
+    }
+
+    public void setPostSplitAttributesDist(double[][] postSplitAttributesDist){
+        this.postSplitAttributesDist = postSplitAttributesDist;
     }
 
     public FloatOption levaticWeight = new FloatOption(
@@ -118,33 +121,38 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 //        }
 
         // igual ao valor que era antigamente passado por parametro
-        double impurityPreSplit = impurity(this.classesDistribution,this.attributes); // impurity(preSplit) - impurity(postSplit)
+        double impurityPreSplit = impurity(this.classesDistribution,this.preSplitAttributesDist); // impurity(preSplit) - impurity(postSplit)
 
         //System.out.println(postSplitDists.length);
-        ArrayList<Double> impuritys = new ArrayList<Double>();
 
+        /*
+        postSplit[A][B]
+        A -> Alto    30  40
+        B -> MEDIO   10  60
+         */
+
+        ArrayList<Double> impuritys = new ArrayList<Double>();
         for (int i = 0;i<postSplitDists.length;i++){
             ArrayList postDistribution= new ArrayList();
-
             for(int j = 0;j<postSplitDists[i].length;j++){
                 postDistribution.add((int)postSplitDists[i][j]);
             }
+
+                // Nao Sabemos ainda o array de attributes
              impuritys.add(impurity(postDistribution,ht.getAttributes()));
         }
-
         /*
-
+            Seleciona a menor impurity das opcoes de Split
          */
         Collections.sort(impuritys);
         double impurityPostSplit = impuritys.get(0);
-
-
         return impurityPreSplit - impurityPostSplit;
     }
 
     public double getRangeOfMerit(double[] preSplitDist) {
-        // using same as gini
-        return 1.0;
+        // using same as infogain
+        int numClasses = preSplitDist.length > 2 ? preSplitDist.length : 2;
+        return Utils.log2(numClasses);
     }
 
     protected void prepareForUseImpl(TaskMonitor monitor, ObjectRepository repository) {

@@ -769,7 +769,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         protected int randomSeed = 1;
 
         // KENNY
-        protected ArrayList<Instance> instancesWithoutClass = new ArrayList();
         int totalLabeled;
         int totalUnlabeled;
         ArrayList classesDistribution = new ArrayList();
@@ -945,7 +944,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
                 impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes,ht.instances);
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 

@@ -26,15 +26,17 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     private static final long serialVersionUID = 1L;
 
     protected DoubleVector minValueObservedPerClass = new DoubleVector();
-
     protected DoubleVector maxValueObservedPerClass = new DoubleVector();
-
     protected AutoExpandVector<GaussianEstimator> attValDistPerClass = new AutoExpandVector<GaussianEstimator>();
+
+    protected DoubleVector minValueObservedPerAtt = new DoubleVector();
+    protected DoubleVector maxValueObservedPerAtt = new DoubleVector();
     protected AutoExpandVector<GaussianEstimator> attValDistPerAtt = new AutoExpandVector<>();
 
     public IntOption numBinsOption = new IntOption("numBins", 'n',
             "The number of bins.", 10, 1, Integer.MAX_VALUE);
 
+    //Class-based
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
         if (Utils.isMissingValue(attVal)) {
@@ -51,6 +53,28 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
                 }
                 if (attVal > this.maxValueObservedPerClass.getValue(classVal)) {
                     this.maxValueObservedPerClass.setValue(classVal, attVal);
+                }
+            }
+            valDist.addObservation(attVal, weight);
+        }
+    }
+
+    //Attribute-based
+    public void observeClassAttribute(double attVal, int classVal, double weight) {
+        if (Utils.isMissingValue(attVal)) {
+        } else {
+            GaussianEstimator valDist = this.attValDistPerAtt.get(classVal);
+            if (valDist == null) {
+                valDist = new GaussianEstimator();
+                this.attValDistPerAtt.set(classVal, valDist);
+                this.minValueObservedPerAtt.setValue(classVal, attVal);
+                this.maxValueObservedPerAtt.setValue(classVal, attVal);
+            } else {
+                if (attVal < this.minValueObservedPerAtt.getValue(classVal)) {
+                    this.minValueObservedPerAtt.setValue(classVal, attVal);
+                }
+                if (attVal > this.maxValueObservedPerAtt.getValue(classVal)) {
+                    this.maxValueObservedPerAtt.setValue(classVal, attVal);
                 }
             }
             valDist.addObservation(attVal, weight);
@@ -76,7 +100,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
             double[][] postAttSplitDists = getAttributeDistResultingFromBinarySplit(splitValue);
             if (criterion instanceof LevaticImpurityCriterion){
 //                TODO: Passar os atributos para o critério
-                ((LevaticImpurityCriterion) criterion).setAttributes(null);
+                ((LevaticImpurityCriterion) criterion).setPreSplitAttributesDist(null);
             }
 
             double merit = criterion.getMeritOfSplit(preSplitDist,
