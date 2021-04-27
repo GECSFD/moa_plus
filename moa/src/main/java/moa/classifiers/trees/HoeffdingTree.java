@@ -459,16 +459,27 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                     this.attributeObservers.set(i, obs);
                 }
 
-                //Cast de NaN para (int) retorna 0 !!! Possivel problema
-                obs.observeAttributeClass(inst.value(instAttIndex), (int) inst.classValue(), inst.weight());
+                // SE classValue == NaN, o cast para (int) retorna 0, isso explica a tendencia a primeira CLASSE
+                // ADICIONADO A CONDICIONAL 27/04/2021
+                if(!isMissing){
+                    obs.observeAttributeClass(inst.value(instAttIndex), (int) inst.classValue(), inst.weight());
+                }
+
+                if(obs instanceof SSLNominalAttributeClassObserver){
+                    for(int j  = 0; j < inst.numAttributes() - 1; j++){
+                        if( j != i ){
+                            ((SSLNominalAttributeClassObserver) obs).observeClassAttribute(inst.value(instAttIndex),(int) inst.value(instAttIndex),inst.weight());                        }
+                    }
+                }
+
+                if(obs instanceof SSLGaussianNumericAttributeClassObserver){
+                    for(int j = 0; j < inst.numAttributes() - 1; j++){
+                        if( j != i ){
+                            ((SSLGaussianNumericAttributeClassObserver) obs).observeClassAttribute(inst.value(instAttIndex),(int) inst.value(instAttIndex),inst.weight());
+                        }
+                    }
+                }
             }
-
-            for(int i = 0; i <inst.numAttributes() - 1;i++){
-                int instAttIndex = modelAttIndexToInstanceAttIndex(i,inst);
-                AttributeClassObserver obs = this.attributeObservers.get(i);
-            }
-
-
         }
 
         public double getWeightSeen() {

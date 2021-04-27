@@ -58,7 +58,6 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
 
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
-
         // attVall = valor do atributo ("posicao")
         // classVal = valor da classe ("posicao")
         // DOUBLE VEC = POR FORA CLASSE, POR DENTRO ATRIBUTO
@@ -71,8 +70,7 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                 valDist = new DoubleVector();
                 this.attValDistPerClass.set(classVal, valDist);
             }
-
-            valDist.addToValue(attValInt, weight);
+            valDist.addToValue(attValInt, weight);  //addToValue (pos,value)
         }
         this.totalWeightObserved += weight;
     }

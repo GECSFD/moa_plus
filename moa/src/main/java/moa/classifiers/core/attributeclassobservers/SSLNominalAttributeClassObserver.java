@@ -26,23 +26,23 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     private static final long serialVersionUID = 1L;
 
     protected double totalWeightObserved = 0.0;
-
     protected double missingWeightObserved = 0.0;
 
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
-    public AutoExpandVector<DoubleVector> attValDistPerAttribute = new AutoExpandVector<>();
+    public AutoExpandVector<DoubleVector> attValDistPerAttribute = new AutoExpandVector<DoubleVector>();
+
 
     //Class-Based
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
-
         // attVall = valor do atributo ("posicao")
-        // classVal = valor da classe ("posicao")
+        // classVal = valor da classe ("posicao")  // vote -> democrata = 0 , republican = 1
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {
             //cast para inteiro
             int attValInt = (int) attVal;
+
             DoubleVector valDist = this.attValDistPerClass.get(classVal);
             if (valDist == null) {
                 valDist = new DoubleVector();
@@ -50,9 +50,28 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
             }
             valDist.addToValue(attValInt, weight);
         }
-
         this.totalWeightObserved += weight;
     }
+
+    /*
+    ClassOberserver do Atributo A
+    A = [ 0 , 1 ]
+    Fiz o split em 0:
+        30,100  -> Classes
+    Fiz o split em 1:
+        50,50  - > Classes
+
+
+    Atributo A com O atributo B,C,D,E,F
+    A = [0,1]
+    Fiz o split em 0:
+        B = 30,60
+        C = 10,10
+        D = 103..
+    Fiz o split em 1:
+        ...
+
+    */
 
     //Attribute-based
     public void observeClassAttribute(double attVal,int classVal,double weight){
@@ -68,7 +87,6 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
             }
             valDist.addToValue(attValInt, weight);
         }
-        // ?
         this.totalWeightObserved += weight;
     }
 
@@ -114,14 +132,18 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
                     new NominalAttributeMultiwayTest(attIndex), postSplitDists,
                     merit);
         }
+
+        //Done
+        for (int valIndexAtt = 0 ; valIndexAtt < maxAttAsClassValsObserved;valIndexAtt++){
+            double[][] postAttSplitDist = getAttributeDistResultingFromBinarySplit(valIndexAtt);
+            if (criterion instanceof LevaticImpurityCriterion){
+                ((LevaticImpurityCriterion) criterion).setPostSplitAttributesDist(postAttSplitDist);
+            }
+        }
+
         for (int valIndex = 0; valIndex < maxAttValsObserved; valIndex++) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(valIndex);
             //PRECISO MUDAR ValIndex em relacao a MaxAttAsClassValsObserved
-            double[][] postAttSplitDist = getAttributeDistResultingFromBinarySplit(valIndex);
-            if (criterion instanceof LevaticImpurityCriterion){
-//                TODO: Passar os atributos para o critério
-                ((LevaticImpurityCriterion) criterion).setPreSplitAttributesDist(null);
-            }
 
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
