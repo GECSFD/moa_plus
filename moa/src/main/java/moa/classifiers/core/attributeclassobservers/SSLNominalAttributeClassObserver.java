@@ -12,6 +12,8 @@ import moa.core.Utils;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 
+import java.util.ArrayList;
+
 /**
  * Class for observing the class and attribute data distribution for a nominal attribute.
  * This observer monitors the class and the attributes distribution of a given attribute.
@@ -20,6 +22,7 @@ import moa.tasks.TaskMonitor;
  * @author Igor Froehner e Vitor Clemes
  * @version $Revision: 1 $
  */
+
 public class SSLNominalAttributeClassObserver extends AbstractOptionHandler implements
         DiscreteAttributeClassObserver {
 
@@ -29,7 +32,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     protected double missingWeightObserved = 0.0;
 
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
-    public AutoExpandVector<DoubleVector> attValDistPerAttribute = new AutoExpandVector<DoubleVector>();
+    public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
 
 
     //Class-Based
@@ -53,38 +56,30 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         this.totalWeightObserved += weight;
     }
 
-    /*
-    ClassOberserver do Atributo A
-    A = [ 0 , 1 ]
-    Fiz o split em 0:
-        30,100  -> Classes
-    Fiz o split em 1:
-        50,50  - > Classes
 
-
-    Atributo A com O atributo B,C,D,E,F
-    A = [0,1]
-    Fiz o split em 0:
-        B = 30,60
-        C = 10,10
-        D = 103..
-    Fiz o split em 1:
-        ...
-
-    */
 
     //Attribute-based
-    public void observeClassAttribute(double attVal,int classVal,double weight){
+    //DONE
+    public void observeAttributes(double attVal,int attFlag,int attAsClassVal,double weight){
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {
             //cast para inteiro
             int attValInt = (int) attVal;
-            DoubleVector valDist = this.attValDistPerAttribute.get(classVal);
-            if (valDist == null) {
+
+            //pega A0
+            AutoExpandVector attDist = this.attValDistPerAttribute.get(attAsClassVal);
+            if (attDist == null)
+                this.attValDistPerAttribute.set(attAsClassVal,new AutoExpandVector<DoubleVector>());
+
+            //Pega o Attributo que sera comparado
+            DoubleVector valDist = this.attValDistPerAttribute.get(attAsClassVal).get(attFlag);
+            if(valDist == null){
                 valDist = new DoubleVector();
-                this.attValDistPerAttribute.set(classVal, valDist);
+                this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
             }
+
+            // Pega o valor
             valDist.addToValue(attValInt, weight);
         }
         this.totalWeightObserved += weight;
@@ -114,31 +109,19 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         AttributeSplitSuggestion bestSuggestion = null;
 
         int maxAttValsObserved = getMaxAttValsObserved();
-        //DONE
-        int maxAttAsClassValsObserved = getMaxAttAsClassValsObserved();
 
+        if (criterion instanceof LevaticImpurityCriterion){
+            //DONE
+            ((LevaticImpurityCriterion) criterion).setPostSplitAttributesDist(this.attValDistPerAttribute);
+        }
         if (!binaryOnly) {
             double[][] postSplitDists = getClassDistsResultingFromMultiwaySplit(maxAttValsObserved);
-            //DONE
-            double[][] postAttSplitDists = getAttributeDistResultingFromMultiwaySplit(maxAttAsClassValsObserved);
-            if (criterion instanceof LevaticImpurityCriterion){
-               //DONE
-                ((LevaticImpurityCriterion) criterion).setPostSplitAttributesDist(postAttSplitDists);
-            }
 
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             bestSuggestion = new AttributeSplitSuggestion(
                     new NominalAttributeMultiwayTest(attIndex), postSplitDists,
                     merit);
-        }
-
-        //Done
-        for (int valIndexAtt = 0 ; valIndexAtt < maxAttAsClassValsObserved;valIndexAtt++){
-            double[][] postAttSplitDist = getAttributeDistResultingFromBinarySplit(valIndexAtt);
-            if (criterion instanceof LevaticImpurityCriterion){
-                ((LevaticImpurityCriterion) criterion).setPostSplitAttributesDist(postAttSplitDist);
-            }
         }
 
         for (int valIndex = 0; valIndex < maxAttValsObserved; valIndex++) {
@@ -169,38 +152,42 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     }
 
     //DONE
-    public int getMaxAttAsClassValsObserved() {
-        int maxAttValsObserved = 0;
-        for (DoubleVector attValDist : this.attValDistPerAttribute) {
-            if ((attValDist != null)
-                    && (attValDist.numValues() > maxAttValsObserved)) {
-                maxAttValsObserved = attValDist.numValues();
-            }
-        }
-        return maxAttValsObserved;
-    }
+//    public int getMaxAttAsClassValsObserved() {
+//        int maxAttValsObserved = 0;
+//        for (AutoExpandVector<DoubleVector> attDist : this.attValDistPerAttribute) {
+//            for(DoubleVector attValDist : attDist) {
+//                if ((attValDist != null)
+//                        && (attValDist.numValues() > maxAttValsObserved)) {
+//                    maxAttValsObserved = attValDist.numValues();
+//                }
+//            }
+//        }
+//        return maxAttValsObserved;
+//    }
 
-    //DONE
-    public double[][] getAttributeDistResultingFromMultiwaySplit(int maxAttValsObserved) {
-        DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
-        for (int i = 0; i < resultingDists.length; i++) {
-            resultingDists[i] = new DoubleVector();
-        }
-        for (int i = 0; i < this.attValDistPerAttribute.size(); i++) {
-            DoubleVector attValDist = this.attValDistPerAttribute.get(i);
-            if (attValDist != null) {
-                for (int j = 0; j < attValDist.numValues(); j++) {
-                    resultingDists[j].addToValue(i, attValDist.getValue(j));
-                }
-            }
-        }
-        double[][] distributions = new double[maxAttValsObserved][];
-        for (int i = 0; i < distributions.length; i++) {
-            distributions[i] = resultingDists[i].getArrayRef();
-        }
-        return distributions;
-    }
 
+//    DONE
+//    public double[][] getAttributeDistResultingFromMultiwaySplit(int maxAttValsObserved) {
+//        // TODO: Sla
+//        return null;
+//    }
+
+    /*
+
+    ClassVal1:
+        A1.1
+        A2.1
+    ClassVal2:
+        A1.2
+        A2.2
+
+    1:
+        A1.1
+        A1.2
+    2:
+        A2.1
+        A2.2
+    */
     public double[][] getClassDistsResultingFromMultiwaySplit(
             int maxAttValsObserved) {
         DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
@@ -222,25 +209,11 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         return distributions;
     }
 
-    //DONE
-    public double[][] getAttributeDistResultingFromBinarySplit(int valIndex) {
-        DoubleVector equalsDist = new DoubleVector();
-        DoubleVector notEqualDist = new DoubleVector();
-        for (int i = 0; i < this.attValDistPerAttribute.size(); i++) {
-            DoubleVector attValDist = this.attValDistPerAttribute.get(i);
-            if (attValDist != null) {
-                for (int j = 0; j < attValDist.numValues(); j++) {
-                    if (j == valIndex) {
-                        equalsDist.addToValue(i, attValDist.getValue(j));
-                    } else {
-                        notEqualDist.addToValue(i, attValDist.getValue(j));
-                    }
-                }
-            }
-        }
-        return new double[][]{equalsDist.getArrayRef(),
-                notEqualDist.getArrayRef()};
-    }
+
+//    public double[][] getAttributeDistResultingFromBinarySplit(int valIndex) {
+//        // TODO: Sla
+//        return null;
+//    }
 
     public double[][] getClassDistsResultingFromBinarySplit(int valIndex) {
         DoubleVector equalsDist = new DoubleVector();
