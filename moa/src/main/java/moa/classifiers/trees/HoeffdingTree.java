@@ -482,17 +482,17 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
                 if(obs instanceof SSLNominalAttributeClassObserver){
                     for(int j  = 0; j < inst.numAttributes() - 1; j++){
-                        if( j != i ){
+                        //if( j != i ){
                             int comparedAttIndex = modelAttIndexToInstanceAttIndex(j,inst);
                             ((SSLNominalAttributeClassObserver) obs).observeAttributes(inst.value(comparedAttIndex)/*Valor B0*/,comparedAttIndex /*Valor B */,(int) inst.value(instAttIndex)/* Valor A0*/ ,inst.weight());                        }
-                    }
+                        //}
                 }
 
                 if(obs instanceof SSLGaussianNumericAttributeClassObserver){
                     for(int j = 0; j < inst.numAttributes() - 1; j++){
-                        if( j != i ){
+                        //if( j != i ){
                             ((SSLGaussianNumericAttributeClassObserver) obs).observeClassAttribute(inst.value(instAttIndex),(int) inst.value(instAttIndex),inst.weight());
-                        }
+                       // }
                     }
                 }
             }
@@ -548,7 +548,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 //System.out.println("foi");
                 crit = (LevaticImpurityCriterion) criterion;
                 crit.setHt(ht);
-                crit.setClassesDistribution(classesDistribution);
+                crit.setPreSplitClassesDistribution(classesDistribution);
                 crit.setPreSplitAttributesDist(attributes);
             }
 
@@ -771,10 +771,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 if ((bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound) || (hoeffdingBound < this.tieThresholdOption.getValue())) {
                     shouldSplit = true;
                 }
-//                if ((bestSuggestion.merit - secondBestSuggestion.merit > impureza) || (impureza < this.tieThresholdOption.getValue())) {
-//                    shouldSplit = true;
-//                }
-                // }
+
                 if ((this.removePoorAttsOption != null)
                         && this.removePoorAttsOption.isSet()) {
                     Set<Integer> poorAtts = new HashSet<Integer>();

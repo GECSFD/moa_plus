@@ -196,14 +196,33 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
     }
 
     // VITOR E IGOR (Post-Split)
-
-    public double postGini(double[] dist, double distSumOfWeights) {
+    public double postSupervisedGini(double[] dist, double distSumOfWeights) {
         double gini = 1.0;
         for (int i = 0; i < dist.length; i++) {
             double relFreq = dist[i] / distSumOfWeights;
             gini -= relFreq * relFreq;
         }
         return gini;
+    }
+
+    public double postUnsupervisedGini(DoubleVector giniNode){
+        int totalApp = 0;
+        double probability = 0;
+        double gini = 0;
+        for( int i = 0 ; i < giniNode.numValues();i++){
+            totalApp += (int) giniNode.getValue(i);
+        }
+
+        for(int i = 0 ; i < giniNode.numValues();i++){
+            probability = giniNode.getValue(i) / totalApp;
+            gini += probability * probability;
+        }
+        return 1 - gini;
+    }
+
+    public Double postUnsupervisedVariance ( DoubleVector varianceNode){
+        double variance = 0;
+        return variance;
     }
 
     public double postImpurity(double[][] postClassSplitDist, AutoExpandVector<AutoExpandVector<DoubleVector>> postAttSplitDist){
@@ -221,15 +240,35 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         double gini = 0.0;
         for (int i = 0; i < postClassSplitDist.length; i++) {
             gini += (distWeights[i] / totalWeight)
-                    * postGini(postClassSplitDist[i], distWeights[i]);
+                    * postSupervisedGini(postClassSplitDist[i], distWeights[i]);
         }
         supervisedImpurity = 1.0 - gini;
 
         // UNSUPERVISED
+        double sslimpurity = 0.0;
+        int numAttributes = this.preSplitAttributesDist.size(); // only to get attList Size
+
+        for(int i = 0 ; i < postSplitAttributesDist.size();i++){
+            for(int j = 0;j < numAttributes;j++){
+                Attribute att = (Attribute) preSplitAttributesDist.get(j); // only to get attList Size
+
+                if (att.getType() == "nominal") {
+                    double giniNode = postUnsupervisedGini(postAttSplitDist.get(i).get(j));
+                    double giniTree = 0;
+                    sslimpurity += giniNode;
+                }
+                else if (att.getType() == "numeric") {
+                    //double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
+                    //double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
+                    sslimpurity += 1.0;
+                } else {
+                    continue;
+                }
+            }
+        }
 
 
-
-
+        unsupervisedImpurity = ((1-w) / numAttributes) * sslimpurity;
         return supervisedImpurity + unsupervisedImpurity;
     }
 }
