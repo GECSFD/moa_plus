@@ -391,7 +391,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
         for (int i = 0; i < numAttributes; i++) {
             Attribute attribute = this.attributes.get(i);
-
+            //attribute appearences structure
             if (attribute.getType() == "nominal") {
                 ArrayList appearances = attribute.getAppearances();
                 // aumenta o count daquele nominal em +1
