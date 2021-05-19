@@ -216,8 +216,19 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         return 1 - summation;
     }
 
-    public Double postUnsupervisedVariance ( DoubleVector varianceNode){
+    public Double postUnsupervisedVariance (DoubleVector varianceNode){
         double variance = 0;
+
+        double left_side = 0;
+        double total_sum = 0;
+
+        for (int i=0; i<varianceNode.numValues(); i++) {
+            left_side += varianceNode.getValue(i) * varianceNode.getValue(i);
+            total_sum += varianceNode.getValue(i);
+        }
+        double right_side = total_sum*total_sum/varianceNode.numValues();
+        variance = left_side - right_side / varianceNode.numValues();
+
         return variance;
     }
 
@@ -269,7 +280,8 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                     sslimpurity += giniNode/giniTree;
                 }
                 else if (att.getType() == "numeric") {
-                    //double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
+                    double varianceNode = this.postUnsupervisedVariance(postAttSplitDist.get(i).get(j));
+                    // double varianceNode = this.postUnsupervisedVariance(att.getValues(), att.getSum(), att.getCount());
                     //double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
                     sslimpurity += 1.0;
                 } else {
