@@ -487,7 +487,6 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                             ((SSLNominalAttributeClassObserver) obs).observeAttributes(inst.value(comparedAttIndex)/*Valor B0*/,comparedAttIndex /*Valor B */,(int) inst.value(instAttIndex)/* Valor A0*/ ,inst.weight(),i);                        }
                         //}
                 }
-
                 if(obs instanceof SSLGaussianNumericAttributeClassObserver){
                     for(int j = 0; j < inst.numAttributes() - 1; j++){
                         //if( j != i ){

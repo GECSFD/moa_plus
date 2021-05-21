@@ -218,8 +218,20 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         return 1 - summation;
     }
 
-    public Double postUnsupervisedVariance ( DoubleVector varianceNode){
+    public Double postUnsupervisedVariance(DoubleVector varianceNode){
         double variance = 0;
+
+        double left_side = 0;
+        double total_sum = 0;
+
+        for (int i=0; i<varianceNode.numValues(); i++) {
+            left_side += varianceNode.getValue(i) * varianceNode.getValue(i);
+            total_sum += varianceNode.getValue(i);
+        }
+
+        double right_side = total_sum*total_sum/varianceNode.numValues();
+        variance = left_side - right_side / varianceNode.numValues();
+
         return variance;
     }
 
@@ -250,6 +262,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         for(int i = 0 ; i < postAttSplitDist.size();i++){
             for(int j = 0;j < numAttributes;j++){
                 Attribute att = (Attribute) preSplitAttributesDist.get(i); // only to get attType
+
                 if (att.getType() == "nominal") {
 
                     int nodeAppearences = 0;
@@ -257,8 +270,8 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                         nodeAppearences += (int) postAttSplitDist.get(i).get(j).getValue(k);
                     }
                     double giniNode = postUnsupervisedGini(postAttSplitDist.get(i).get(j),nodeAppearences);
-
                     int treeAppearances = 0;
+
                     DoubleVector treeValues = null;
                     for (int k = 0 ; k < postAttSplitDist.size();k++){
                         for(int n = 0 ; n < postAttSplitDist.get(i).get(j).numValues();n++){
@@ -267,10 +280,12 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                             treeValues.setValue(n,treeValues.getValue(n) + postAttSplitDist.get(k).get(j).getValue(n));
                         }
                     }
+
                     double giniTree = postUnsupervisedGini(treeValues,treeAppearances);
                     sslimpurity += giniNode/giniTree;
                 }
                 else if (att.getType() == "numeric") {
+                    double varianceNode = this.postUnsupervisedVariance(postAttSplitDist.get(i).get(j));
                     //double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
                     //double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
                     sslimpurity += 1.0;
@@ -283,8 +298,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
         //ponderacao
         double ponderedSSLImpurity = 0.0;
-
-            //if nominal
+        //if nominal
         if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "nominal"){
             ArrayList<Integer> totalAttDist = new ArrayList<Integer>();
             int sumAtts = 0;
@@ -297,13 +311,12 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                 totalAttDist.add(perAtt);
                 perAtt = 0;
             }
-
-
             for(int i = 0 ; i < totalAttDist.size();i++){
                 ponderedSSLImpurity += (unsupervisedValues.get(i) * totalAttDist.get(i)) / sumAtts;
             }
         }
-            //if numeric
+
+        //if numeric
         else if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "numeric"){
 
         }
