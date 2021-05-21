@@ -31,6 +31,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     protected double totalWeightObserved = 0.0;
     protected double missingWeightObserved = 0.0;
 
+    public int attIndexOfSplit = 0;
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
     public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
 
@@ -105,7 +106,8 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
 
     //Attribute-based
     //DONE
-    public void observeAttributes(double attVal,int attFlag,int attAsClassVal,double weight){
+    public void observeAttributes(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex){
+        this.attIndexOfSplit = attIndex;
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {

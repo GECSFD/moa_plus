@@ -20,7 +20,6 @@
 package moa.classifiers.core.splitcriteria;
 
 import com.github.javacliparser.FloatOption;
-import com.yahoo.labs.samoa.instances.Instance;
 import moa.classifiers.trees.SSLHoeffdingAdaptiveTree;
 import moa.classifiers.trees.iadem.SSL.Attribute;
 import moa.core.AutoExpandVector;
@@ -30,7 +29,6 @@ import moa.core.Utils;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 import java.util.ArrayList;
-import java.util.Collections;
 
 
 /**
@@ -66,6 +64,10 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
     AutoExpandVector<AutoExpandVector<DoubleVector>> postSplitAttributesDist;
     public void setPostSplitAttributesDist(AutoExpandVector<AutoExpandVector<DoubleVector>>  postSplitAttributesDist){
         this.postSplitAttributesDist = postSplitAttributesDist;
+    }
+    public int attIndexOfSplit;
+    public void setAttIndexOfSplit(int i){
+        this.attIndexOfSplit=i;
     }
 
     public FloatOption levaticWeight = new FloatOption(
@@ -279,8 +281,35 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
             unsupervisedValues.add(sslimpurity);
         }
 
+        //ponderacao
+        double ponderedSSLImpurity = 0.0;
 
-        unsupervisedImpurity = ((1-w) / numAttributes) * sslimpurity;
+            //if nominal
+        if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "nominal"){
+            ArrayList<Integer> totalAttDist = new ArrayList<Integer>();
+            int sumAtts = 0;
+            for(int i = 0 ; i < postAttSplitDist.size();i++){
+                int perAtt = 0;
+                for(int j = 0; j < postAttSplitDist.get(i).get(attIndexOfSplit).numValues();j++){
+                    sumAtts = (int) postAttSplitDist.get(i).get(attIndexOfSplit).getValue(j);
+                    perAtt = sumAtts;
+                }
+                totalAttDist.add(perAtt);
+                perAtt = 0;
+            }
+
+
+            for(int i = 0 ; i < totalAttDist.size();i++){
+                ponderedSSLImpurity += (unsupervisedValues.get(i) * totalAttDist.get(i)) / sumAtts;
+            }
+        }
+            //if numeric
+        else if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "numeric"){
+
+        }
+
+
+        unsupervisedImpurity = ((1-w) / numAttributes) * ponderedSSLImpurity;
         return supervisedImpurity + unsupervisedImpurity;
     }
 }
