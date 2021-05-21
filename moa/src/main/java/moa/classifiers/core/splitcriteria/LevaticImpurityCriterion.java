@@ -219,6 +219,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
     }
 
     public Double postUnsupervisedVariance(DoubleVector varianceNode){
+
         double variance = 0;
 
         double left_side = 0;
