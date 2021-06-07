@@ -391,7 +391,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
         for (int i = 0; i < numAttributes; i++) {
             Attribute attribute = this.attributes.get(i);
-
+            //attribute appearences structure
             if (attribute.getType() == "nominal") {
                 ArrayList appearances = attribute.getAppearances();
                 // aumenta o count daquele nominal em +1
@@ -769,7 +769,6 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
         protected int randomSeed = 1;
 
         // KENNY
-        protected ArrayList<Instance> instancesWithoutClass = new ArrayList();
         int totalLabeled;
         int totalUnlabeled;
         ArrayList classesDistribution = new ArrayList();
@@ -945,7 +944,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
                 impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes,ht.instances);
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 

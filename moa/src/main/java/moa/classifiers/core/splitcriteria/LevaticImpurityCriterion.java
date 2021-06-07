@@ -20,14 +20,15 @@
 package moa.classifiers.core.splitcriteria;
 
 import com.github.javacliparser.FloatOption;
-import com.yahoo.labs.samoa.instances.Instance;
 import moa.classifiers.trees.SSLHoeffdingAdaptiveTree;
 import moa.classifiers.trees.iadem.SSL.Attribute;
+import moa.core.AutoExpandVector;
+import moa.core.DoubleVector;
 import moa.core.ObjectRepository;
+import moa.core.Utils;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 import java.util.ArrayList;
-import java.util.Collections;
 
 
 /**
@@ -42,30 +43,31 @@ import java.util.Collections;
 public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         SplitCriterion {
 
+    //SSLHOEFTree para auxiliar
     SSLHoeffdingAdaptiveTree ht;
-    // VALORES DO NODO
-    ArrayList classesDistribution = new ArrayList();
-    ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-    ArrayList<Instance> processedInstances = new ArrayList<Instance>();
-
-    public void setProcessedInstances(ArrayList<Instance> processedInstances) {
-        this.processedInstances = processedInstances;
-    }
-
     public SSLHoeffdingAdaptiveTree getHt() {
         return ht;
     }
-
     public void setHt(SSLHoeffdingAdaptiveTree ht) {
         this.ht = ht;
     }
 
-    public void setClassesDistribution(ArrayList classesDistribution) {
-        this.classesDistribution = classesDistribution;
+    //PRE-SPLIT
+    ArrayList preSplitClassesDistribution = new ArrayList();
+    public void setPreSplitClassesDistribution(ArrayList classesDistribution) { this.preSplitClassesDistribution = classesDistribution; }
+    ArrayList<Attribute> preSplitAttributesDist = new ArrayList<Attribute>();
+    public void setPreSplitAttributesDist(ArrayList attributes) {
+        this.preSplitAttributesDist = attributes;
     }
 
-    public void setAttributes(ArrayList attributes) {
-        this.attributes = attributes;
+    //POST-SPLIT
+    AutoExpandVector<AutoExpandVector<DoubleVector>> postSplitAttributesDist;
+    public void setPostSplitAttributesDist(AutoExpandVector<AutoExpandVector<DoubleVector>>  postSplitAttributesDist){
+        this.postSplitAttributesDist = postSplitAttributesDist;
+    }
+    public int attIndexOfSplit;
+    public void setAttIndexOfSplit(int i){
+        this.attIndexOfSplit=i;
     }
 
     public FloatOption levaticWeight = new FloatOption(
@@ -78,73 +80,16 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
 
     public double getMeritOfSplit(double[] preSplitDist, double[][] postSplitDists) {
-//      Double[] doubleArray = ArrayUtils.toObject(preSplitDist);
-//      List<Double> list = Arrays.asList(doubleArray);
-//        for(int i = 0;i<preSplitDist.length;i++){
-//            System.out.println("Pre : " +preSplitDist[i]);
-//        }
-//        for(int i = 0;i<postSplitDists.length;i++){
-//            for(int j = 0; j<postSplitDists.length;j++){
-//                System.out.println("Post : "+postSplitDists[i][j]);
-//            }
-//        }
-        /*
-            Considerando Pre-Post:
-                se res < 0 => Split RUIM!
-                Se res > 0 => Split BOM!
-            Considerando Post-Pre:
-                se res < 0 = SPLIT BOM!
-                se res > 0 = SPLIT RUIM!
-
-            PENSAR NISSO AO COMPARAR
-        */
-
-//        System.out.println("HT.CLASSES-DISTR:");
-//        System.out.println(ht.getClassesDistribution());
-//
-//        System.out.println("NODE.CLASSES-DIST:");
-//        System.out.println(classesDistribution);
-//
-//        System.out.println("PRE SPLIT:");
-//        for(int i = 0; i < preSplitDist.length;i++){
-//            System.out.println(preSplitDist[i]);
-//        }
-
-//        System.out.println("POST SPLIT:");
-//        for(int i = 0; i < postSplitDists.length;i++){
-//            for(int j = 0;i < postSplitDists.length;i++){
-//                System.out.println(postSplitDists[i][j]);
-//            }
-//        }
-
-        // igual ao valor que era antigamente passado por parametro
-        double impurityPreSplit = impurity(this.classesDistribution,this.attributes); // impurity(preSplit) - impurity(postSplit)
-
-        //System.out.println(postSplitDists.length);
-        ArrayList<Double> impuritys = new ArrayList<Double>();
-
-        for (int i = 0;i<postSplitDists.length;i++){
-            ArrayList postDistribution= new ArrayList();
-
-            for(int j = 0;j<postSplitDists[i].length;j++){
-                postDistribution.add((int)postSplitDists[i][j]);
-            }
-             impuritys.add(impurity(postDistribution,ht.getAttributes()));
-        }
-
-        /*
-
-         */
-        Collections.sort(impuritys);
-        double impurityPostSplit = impuritys.get(0);
-
+        double impurityPreSplit = preImpurity(this.preSplitClassesDistribution,this.preSplitAttributesDist); // impurity(preSplit) - impurity(postSplit)
+        double impurityPostSplit = postImpurity(postSplitDists,postSplitAttributesDist);
 
         return impurityPreSplit - impurityPostSplit;
     }
 
     public double getRangeOfMerit(double[] preSplitDist) {
-        // using same as gini
-        return 1.0;
+        // using same as infogain
+        int numClasses = preSplitDist.length > 2 ? preSplitDist.length : 2;
+        return Utils.log2(numClasses);
     }
 
     protected void prepareForUseImpl(TaskMonitor monitor, ObjectRepository repository) {
@@ -155,28 +100,9 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         // TODO Auto-generated method stub
     }
 
-    // KENNY
-    public static double entropy(ArrayList classesDistribution, int totalAppearances) {
-        int numClasses = (int) classesDistribution.size();
-        double entropy = 0.0;
-        double probability = 0.0;
-        double log = 0.0;
-
-        for (int i = 0; i < numClasses; i++) {
-            int distribution = (int) classesDistribution.get(i);
-
-            probability = (double) distribution / totalAppearances;
-            log = Math.log(probability);
-
-            entropy -= probability * log;
-        }
-
-        return entropy;
-    }
-
-    // KENNY
-    public double gini(ArrayList classesDistribution, int totalAppearances) {
-
+    // KENNY (Pre-Split)
+    public double preGini(ArrayList classesDistribution, int totalAppearances) {
+        // appearances = classesDist
         int numClasses = (int) classesDistribution.size();
         double summation = 0.0;
         double probability = 0.0;
@@ -196,7 +122,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         return (1 - summation);
     }
 
-    public double variance(ArrayList oldData, double sum, int totalCount) {
+    public double preVariance(ArrayList oldData, double sum, int totalCount) {
         double variance = 0.0;
         double rightSide = (sum * sum) / totalCount;
         double leftSide = 0.0;
@@ -212,7 +138,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         return variance;
     }
 
-    public double impurity(ArrayList classesDistribution, ArrayList<Attribute> attributes) {
+    public double preImpurity(ArrayList classesDistribution, ArrayList<Attribute> attributes) {
         double impurity = 0.0;
         double w = levaticWeight.getValue(); // original = 0.5
 
@@ -229,8 +155,8 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         double supervised = w * entropyLabeled;*/}
 
 
-        double giniLabeled = this.gini(classesDistribution,totalLabeled); //supostamente apenas rotulados
-        double giniLabeledTraining = this.gini(ht.getClassesDistribution(),ht.getTotalLabeled()); // conjunto total
+        double giniLabeled = this.preGini(classesDistribution,totalLabeled); //supostamente apenas rotulados
+        double giniLabeledTraining = this.preGini(ht.getClassesDistribution(),ht.getTotalLabeled()); // conjunto total
 
         //E1
         double supervised = w * (giniLabeled / giniLabeledTraining);
@@ -244,15 +170,15 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
             Attribute att = (Attribute) attributes.get(i);
             Attribute treeAttribute = (Attribute) ht.getAttributes().get(i);
 
-            //Eu
+
             if (att.getType() == "nominal") {
-                double giniNode = this.gini(att.getAppearances(), att.getAppearancesCount());
-                double giniTree = this.gini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
+                double giniNode = this.preGini(att.getAppearances(), att.getAppearancesCount());
+                double giniTree = this.preGini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
 
                 sslimpurity += giniNode/giniTree;
             } else if (att.getType() == "numeric") {
-                double varianceNode = this.variance(att.getValues(), att.getSum(), att.getCount());
-                double varianceTree = this.variance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
+                double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
+                double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
 
                 sslimpurity += varianceNode/varianceTree;
             } else {
@@ -267,5 +193,147 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 //        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
 
         return impurity;
+    }
+
+    // VITOR E IGOR (Post-Split)
+    public double postSupervisedGini(double[] dist, double distSumOfWeights) {
+        double gini = 1.0;
+        for (int i = 0; i < dist.length; i++) {
+            double relFreq = dist[i] / distSumOfWeights;
+            gini -= relFreq * relFreq;
+        }
+        return gini;
+    }
+
+    public double postUnsupervisedGini(DoubleVector nodeAttDist, int appearances){
+        double probability = 0;
+        double summation = 0;
+        int numClasses = nodeAttDist.numValues();
+
+        for(int i = 0; i < numClasses;i++){
+            probability = nodeAttDist.getValue(i)/appearances;
+            probability = probability * probability;
+            summation = probability;
+        }
+        return 1 - summation;
+    }
+
+    public Double postUnsupervisedVariance(DoubleVector varianceNode){
+
+        double variance = 0;
+
+        double left_side = 0;
+        double total_sum = 0;
+
+        for (int i=0; i<varianceNode.numValues(); i++) {
+            left_side += varianceNode.getValue(i) * varianceNode.getValue(i);
+            total_sum += varianceNode.getValue(i);
+        }
+        double right_side = total_sum*total_sum/varianceNode.numValues();
+        variance = left_side - right_side / varianceNode.numValues();
+
+        return variance;
+    }
+
+    public double postImpurity(double[][] postClassSplitDist, AutoExpandVector<AutoExpandVector<DoubleVector>> postAttSplitDist){
+        double w = levaticWeight.getValue();
+        double supervisedImpurity = 0.0;
+        double unsupervisedImpurity = 0.0;
+
+        // SUPERVISED
+        double totalWeight = 0.0;
+        double[] distWeights = new double[postClassSplitDist.length];
+        for (int i = 0; i < postClassSplitDist.length; i++) {
+            distWeights[i] = Utils.sum(postClassSplitDist[i]);
+            totalWeight += distWeights[i];
+        }
+        double gini = 0.0;
+        for (int i = 0; i < postClassSplitDist.length; i++) {
+            gini += (distWeights[i] / totalWeight)
+                    * postSupervisedGini(postClassSplitDist[i], distWeights[i]);
+        }
+        supervisedImpurity = 1.0 - gini;
+
+        // UNSUPERVISED
+        double sslimpurity = 0.0;
+        int numAttributes = this.preSplitAttributesDist.size(); // only to get attListSize
+        ArrayList<Double> unsupervisedValues = new ArrayList<Double>();
+
+
+        for(int i = 0 ; i < postAttSplitDist.size();i++){
+            if(postAttSplitDist.get(i) == null){
+                continue;
+            }
+            for(int j = 0;j < postAttSplitDist.get(i).size();j++){
+                Attribute att = (Attribute) preSplitAttributesDist.get(i); // only to get attType
+
+                if (att.getType() == "nominal") {
+
+                    int nodeAppearences = 0;
+                    for(int k = 0; k < postAttSplitDist.get(i).get(j).numValues();k++){
+                        nodeAppearences += (int) postAttSplitDist.get(i).get(j).getValue(k);
+                    }
+                    double giniNode = postUnsupervisedGini(postAttSplitDist.get(i).get(j),nodeAppearences);
+                    int treeAppearances = 0;
+
+                    DoubleVector treeValues = null;
+
+                    for (int k = 0 ; k < postAttSplitDist.size();k++){
+                        if(postAttSplitDist.get(k) == null){
+                            continue;
+                        }
+                        for(int n = 0 ; n < postAttSplitDist.get(i).get(j).numValues();n++){
+                            treeAppearances += (int) postAttSplitDist.get(k).get(j).getValue(n);
+                            treeValues = new DoubleVector();
+                            treeValues.setValue(n,treeValues.getValue(n) + postAttSplitDist.get(k).get(j).getValue(n));
+                        }
+                    }
+
+                    double giniTree = postUnsupervisedGini(treeValues,treeAppearances);
+                    sslimpurity += giniNode/giniTree;
+                }
+                else if (att.getType() == "numeric") {
+                    double varianceNode = this.postUnsupervisedVariance(postAttSplitDist.get(i).get(j));
+                    //double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
+                    //double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
+                    sslimpurity += 1.0;
+                } else {
+                    continue;
+                }
+            }
+            unsupervisedValues.add(sslimpurity);
+        }
+
+        //ponderacao
+        double ponderedSSLImpurity = 0.0;
+        //if nominal
+        if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "nominal"){
+            ArrayList<Integer> totalAttDist = new ArrayList<Integer>();
+            int sumAtts = 0;
+            for(int i = 0 ; i < postAttSplitDist.size();i++){
+                if(postAttSplitDist.get(i) == null){
+                    continue;
+                }
+                int perAtt = 0;
+                for(int j = 0; j < postAttSplitDist.get(i).get(attIndexOfSplit).numValues();j++){
+                    sumAtts = (int) postAttSplitDist.get(i).get(attIndexOfSplit).getValue(j);
+                    perAtt = sumAtts;
+                }
+                totalAttDist.add(perAtt);
+                perAtt = 0;
+            }
+            for(int i = 0 ; i < totalAttDist.size();i++){
+                ponderedSSLImpurity += (unsupervisedValues.get(i) * totalAttDist.get(i)) / sumAtts;
+            }
+        }
+
+        //if numeric
+        else if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "numeric"){
+
+        }
+
+
+        unsupervisedImpurity = ((1-w) / numAttributes) * ponderedSSLImpurity;
+        return supervisedImpurity + unsupervisedImpurity;
     }
 }

@@ -1,85 +1,166 @@
-/*
- *    NominalAttributeClassObserver.java
- *    Copyright (C) 2007 University of Waikato, Hamilton, New Zealand
- *    @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
- *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 3 of the License, or
- *    (at your option) any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program. If not, see <http://www.gnu.org/licenses/>.
- *    
- */
 package moa.classifiers.core.attributeclassobservers;
 
 import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.NominalAttributeBinaryTest;
 import moa.classifiers.core.conditionaltests.NominalAttributeMultiwayTest;
+import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
-import moa.core.ObjectRepository;
-import moa.tasks.TaskMonitor;
-import moa.core.Utils;
-
-import moa.core.AutoExpandVector;
-import moa.core.DoubleVector;
+import moa.core.*;
 import moa.options.AbstractOptionHandler;
+import moa.tasks.TaskMonitor;
+
+import java.util.ArrayList;
 
 /**
- * Class for observing the class data distribution for a nominal attribute.
- * This observer monitors the class distribution of a given attribute.
+ * Class for observing the class and attribute data distribution for a nominal attribute.
+ * This observer monitors the class and the attributes distribution of a given attribute.
  * Used in naive Bayes and decision trees to monitor data statistics on leaves.
  *
- * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
- * @version $Revision: 7 $
+ * @author Igor Froehner e Vitor Clemes
+ * @version $Revision: 1 $
  */
-public class NominalAttributeClassObserver extends AbstractOptionHandler implements
+
+public class SSLNominalAttributeClassObserver extends AbstractOptionHandler implements
         DiscreteAttributeClassObserver {
 
     private static final long serialVersionUID = 1L;
 
-//    protected String attName = null;
-//
-//    public void setName(String attName){
-//        this.attName = attName;
-//    }
-
     protected double totalWeightObserved = 0.0;
-
     protected double missingWeightObserved = 0.0;
 
+    public int attIndexOfSplit = 0;
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
+    public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
+    public AutoExpandVector<ArrayList<GaussianEstimator>> gaussianEstimators = new AutoExpandVector<ArrayList<GaussianEstimator>>();
+    /*
+    Attributo-classe A
+    Attributos a serem comparados : B,C,..,N
 
+    ClassValue0:
+        A1.1
+        A2.1
+    ClassValue1:
+        A1.2
+        A2.2
+
+    A1.1
+    A1.2
+
+    A2.1
+    A2.2
+
+    A0:
+        A:
+            A0:100%
+            A1:0%
+        B:                             Numerico
+            Bi : 10
+            Bii : 20
+        C:                             Nominal
+            Ci : 13
+            Cii : 23
+        N:                             Nominal
+            Ni : 10
+            Nii : 12
+    A1:
+        B:
+            Bi : 23
+            Bii : 32
+        C:
+            Ci : 23
+            Cii : 13
+        N:
+            Ni : 22
+            Nii : 10
+     An...
+     */
+
+    //Class-Based
     @Override
     public void observeAttributeClass(double attVal, int classVal, double weight) {
         // attVall = valor do atributo ("posicao")
-        // classVal = valor da classe ("posicao")
-        // DOUBLE VEC = POR FORA CLASSE, POR DENTRO ATRIBUTO
+        // classVal = valor da classe ("posicao")  // vote -> democrata = 0 , republican = 1
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {
+            //cast para inteiro
             int attValInt = (int) attVal;
+
             DoubleVector valDist = this.attValDistPerClass.get(classVal);
             if (valDist == null) {
                 valDist = new DoubleVector();
                 this.attValDistPerClass.set(classVal, valDist);
             }
-            valDist.addToValue(attValInt, weight);  //addToValue (pos,value)
+            valDist.addToValue(attValInt, weight);
         }
         this.totalWeightObserved += weight;
     }
 
 
 
+    //Attribute-based
+    //DONE
+    public void observeNumericAttribute(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex){
+        this.attIndexOfSplit = attIndex;
+        if (Utils.isMissingValue(attVal)) {
+            this.missingWeightObserved += weight;
+        } else {
+            //cast para inteiro
+            int attValInt = (int) attVal;
+
+            //pega A0
+            AutoExpandVector attDist = this.attValDistPerAttribute.get(attAsClassVal);
+            if (attDist == null)
+                this.attValDistPerAttribute.set(attAsClassVal,new AutoExpandVector<DoubleVector>());
+
+            //Pega o Attributo que sera comparado
+            DoubleVector valDist = this.attValDistPerAttribute.get(attAsClassVal).get(attFlag);
+            if(valDist == null){
+                valDist = new DoubleVector();
+                this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
+            }
+
+            GaussianEstimator estimator = this.gaussianEstimators.get(attAsClassVal).get(attFlag);
+            if(estimator == null){
+                estimator = new GaussianEstimator();
+                estimator.addObservation(attVal,weight);
+                
+            }
+            // Pega o valor
+            valDist.setValue(attValInt,estimator.getVariance());
+        }
+        this.totalWeightObserved += weight;
+    }
+
+    public void observeNominalAttribute(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex) {
+        this.attIndexOfSplit = attIndex;
+        if (Utils.isMissingValue(attVal)) {
+            this.missingWeightObserved += weight;
+        } else {
+            //cast para inteiro
+            int attValInt = (int) attVal;
+
+            //pega A0
+            AutoExpandVector attDist = this.attValDistPerAttribute.get(attAsClassVal);
+            if (attDist == null)
+                this.attValDistPerAttribute.set(attAsClassVal,new AutoExpandVector<DoubleVector>());
+
+            //Pega o Attributo que sera comparado
+            DoubleVector valDist = this.attValDistPerAttribute.get(attAsClassVal).get(attFlag);
+            if(valDist == null){
+                valDist = new DoubleVector();
+
+                this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
+            }
+            // Pega o valor
+            valDist.addToValue(attValInt, weight);
+        }
+        this.totalWeightObserved += weight;
+    }
+
     @Override
     public double probabilityOfAttributeValueGivenClass(double attVal,
-            int classVal) {
+                                                        int classVal) {
         DoubleVector obs = this.attValDistPerClass.get(classVal);
         return obs != null ? (obs.getValue((int) attVal) + 1.0)
                 / (obs.sumOfValues() + obs.numValues()) : 0.0;
@@ -99,10 +180,15 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
             boolean binaryOnly) {
 
         AttributeSplitSuggestion bestSuggestion = null;
+
         int maxAttValsObserved = getMaxAttValsObserved();
+
+        if (criterion instanceof LevaticImpurityCriterion){
+            //DONE
+            ((LevaticImpurityCriterion) criterion).setPostSplitAttributesDist(this.attValDistPerAttribute);
+        }
         if (!binaryOnly) {
             double[][] postSplitDists = getClassDistsResultingFromMultiwaySplit(maxAttValsObserved);
-            //System.out.println(postSplitDists.length);
 
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
@@ -110,8 +196,10 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                     new NominalAttributeMultiwayTest(attIndex), postSplitDists,
                     merit);
         }
+
         for (int valIndex = 0; valIndex < maxAttValsObserved; valIndex++) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(valIndex);
+
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {
@@ -120,6 +208,7 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                         postSplitDists, merit);
             }
         }
+
         return bestSuggestion;
     }
 
@@ -134,7 +223,43 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
         return maxAttValsObserved;
     }
 
-    //copiar
+    //DONE
+//    public int getMaxAttAsClassValsObserved() {
+//        int maxAttValsObserved = 0;
+//        for (AutoExpandVector<DoubleVector> attDist : this.attValDistPerAttribute) {
+//            for(DoubleVector attValDist : attDist) {
+//                if ((attValDist != null)
+//                        && (attValDist.numValues() > maxAttValsObserved)) {
+//                    maxAttValsObserved = attValDist.numValues();
+//                }
+//            }
+//        }
+//        return maxAttValsObserved;
+//    }
+
+
+//    DONE
+//    public double[][] getAttributeDistResultingFromMultiwaySplit(int maxAttValsObserved) {
+//        // TODO: Sla
+//        return null;
+//    }
+
+    /*
+
+    ClassVal1:
+        A1.1
+        A2.1
+    ClassVal2:
+        A1.2
+        A2.2
+
+    1:
+        A1.1
+        A1.2
+    2:
+        A2.1
+        A2.2
+    */
     public double[][] getClassDistsResultingFromMultiwaySplit(
             int maxAttValsObserved) {
         DoubleVector[] resultingDists = new DoubleVector[maxAttValsObserved];
@@ -149,14 +274,18 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
                 }
             }
         }
-
         double[][] distributions = new double[maxAttValsObserved][];
         for (int i = 0; i < distributions.length; i++) {
             distributions[i] = resultingDists[i].getArrayRef();
         }
         return distributions;
     }
-    // post-distribution das classes
+
+
+//    public double[][] getAttributeDistResultingFromBinarySplit(int valIndex) {
+//        // TODO: Sla
+//        return null;
+//    }
 
     public double[][] getClassDistsResultingFromBinarySplit(int valIndex) {
         DoubleVector equalsDist = new DoubleVector();
@@ -174,7 +303,7 @@ public class NominalAttributeClassObserver extends AbstractOptionHandler impleme
             }
         }
         return new double[][]{equalsDist.getArrayRef(),
-                    notEqualDist.getArrayRef()};
+                notEqualDist.getArrayRef()};
     }
 
     @Override

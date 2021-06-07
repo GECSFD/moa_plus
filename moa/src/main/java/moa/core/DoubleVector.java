@@ -27,6 +27,7 @@ import moa.AbstractMOAObject;
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
  * @version $Revision: 7 $
  */
+
 public class DoubleVector extends AbstractMOAObject {
 
     private static final long serialVersionUID = 1L;
@@ -56,6 +57,7 @@ public class DoubleVector extends AbstractMOAObject {
         }
         this.array[i] = v;
     }
+
 
     public void addToValue(int i, double v) {
         if (i >= this.array.length) {
