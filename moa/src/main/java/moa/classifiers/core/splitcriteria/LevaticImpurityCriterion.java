@@ -228,7 +228,6 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
             left_side += varianceNode.getValue(i) * varianceNode.getValue(i);
             total_sum += varianceNode.getValue(i);
         }
-
         double right_side = total_sum*total_sum/varianceNode.numValues();
         variance = left_side - right_side / varianceNode.numValues();
 
@@ -259,8 +258,12 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         int numAttributes = this.preSplitAttributesDist.size(); // only to get attListSize
         ArrayList<Double> unsupervisedValues = new ArrayList<Double>();
 
+
         for(int i = 0 ; i < postAttSplitDist.size();i++){
-            for(int j = 0;j < numAttributes;j++){
+            if(postAttSplitDist.get(i) == null){
+                continue;
+            }
+            for(int j = 0;j < postAttSplitDist.get(i).size();j++){
                 Attribute att = (Attribute) preSplitAttributesDist.get(i); // only to get attType
 
                 if (att.getType() == "nominal") {
@@ -273,7 +276,11 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                     int treeAppearances = 0;
 
                     DoubleVector treeValues = null;
+
                     for (int k = 0 ; k < postAttSplitDist.size();k++){
+                        if(postAttSplitDist.get(k) == null){
+                            continue;
+                        }
                         for(int n = 0 ; n < postAttSplitDist.get(i).get(j).numValues();n++){
                             treeAppearances += (int) postAttSplitDist.get(k).get(j).getValue(n);
                             treeValues = new DoubleVector();
@@ -303,6 +310,9 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
             ArrayList<Integer> totalAttDist = new ArrayList<Integer>();
             int sumAtts = 0;
             for(int i = 0 ; i < postAttSplitDist.size();i++){
+                if(postAttSplitDist.get(i) == null){
+                    continue;
+                }
                 int perAtt = 0;
                 for(int j = 0; j < postAttSplitDist.get(i).get(attIndexOfSplit).numValues();j++){
                     sumAtts = (int) postAttSplitDist.get(i).get(attIndexOfSplit).getValue(j);

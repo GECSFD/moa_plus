@@ -5,10 +5,7 @@ import moa.classifiers.core.conditionaltests.NominalAttributeBinaryTest;
 import moa.classifiers.core.conditionaltests.NominalAttributeMultiwayTest;
 import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
-import moa.core.AutoExpandVector;
-import moa.core.DoubleVector;
-import moa.core.ObjectRepository;
-import moa.core.Utils;
+import moa.core.*;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 
@@ -34,7 +31,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     public int attIndexOfSplit = 0;
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
     public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
-
+    public AutoExpandVector<ArrayList<GaussianEstimator>> gaussianEstimators = new AutoExpandVector<ArrayList<GaussianEstimator>>();
     /*
     Attributo-classe A
     Attributos a serem comparados : B,C,..,N
@@ -65,9 +62,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         N:                             Nominal
             Ni : 10
             Nii : 12
-
     A1:
-
         B:
             Bi : 23
             Bii : 32
@@ -77,7 +72,6 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         N:
             Ni : 22
             Nii : 10
-
      An...
      */
 
@@ -106,7 +100,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
 
     //Attribute-based
     //DONE
-    public void observeAttributes(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex){
+    public void observeNumericAttribute(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex){
         this.attIndexOfSplit = attIndex;
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
@@ -126,6 +120,38 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
                 this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
             }
 
+            GaussianEstimator estimator = this.gaussianEstimators.get(attAsClassVal).get(attFlag);
+            if(estimator == null){
+                estimator = new GaussianEstimator();
+                estimator.addObservation(attVal,weight);
+                
+            }
+            // Pega o valor
+            valDist.setValue(attValInt,estimator.getVariance());
+        }
+        this.totalWeightObserved += weight;
+    }
+
+    public void observeNominalAttribute(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex) {
+        this.attIndexOfSplit = attIndex;
+        if (Utils.isMissingValue(attVal)) {
+            this.missingWeightObserved += weight;
+        } else {
+            //cast para inteiro
+            int attValInt = (int) attVal;
+
+            //pega A0
+            AutoExpandVector attDist = this.attValDistPerAttribute.get(attAsClassVal);
+            if (attDist == null)
+                this.attValDistPerAttribute.set(attAsClassVal,new AutoExpandVector<DoubleVector>());
+
+            //Pega o Attributo que sera comparado
+            DoubleVector valDist = this.attValDistPerAttribute.get(attAsClassVal).get(attFlag);
+            if(valDist == null){
+                valDist = new DoubleVector();
+
+                this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
+            }
             // Pega o valor
             valDist.addToValue(attValInt, weight);
         }

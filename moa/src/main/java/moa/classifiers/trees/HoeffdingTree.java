@@ -464,28 +464,21 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 if(!isMissing){
                     obs.observeAttributeClass(inst.value(instAttIndex), (int) inst.classValue(), inst.weight());
                 }
-                /*
-                A0:
-                    B:
-                        1
-                        2
-                    C:
-                        12
-                A1:
-                    B:
-                        2
-                        3
-                    C:
-                        1
-                        3
-                */
 
                 if(obs instanceof SSLNominalAttributeClassObserver){
-                    for(int j  = 0; j < inst.numAttributes() - 1; j++){
-                        //if( j != i ){
-                            int comparedAttIndex = modelAttIndexToInstanceAttIndex(j,inst);
-                            ((SSLNominalAttributeClassObserver) obs).observeAttributes(inst.value(comparedAttIndex)/*Valor B0*/,comparedAttIndex /*Valor B */,(int) inst.value(instAttIndex)/* Valor A0*/ ,inst.weight(),i);                        }
-                        //}
+                    for(int j  = 0; j < inst.numAttributes() - 1; j++) {
+                        int comparedAttIndex = modelAttIndexToInstanceAttIndex(j, inst);
+                        System.out.println(comparedAttIndex);
+                        if (inst.attribute(j).isNominal()) {
+                            System.out.println("Nominal");
+                            ((SSLNominalAttributeClassObserver) obs).observeNominalAttribute(inst.value(comparedAttIndex)/*Valor B0*/, comparedAttIndex /*Valor B */, (int) inst.value(instAttIndex)/* Valor A0*/, inst.weight(), i);
+                        }
+                        else if (inst.attribute(j).isNumeric()) {
+                            System.out.println("Numerico");
+                            ((SSLNominalAttributeClassObserver) obs).observeNumericAttribute(inst.value(comparedAttIndex)/*Valor B0*/, comparedAttIndex /*Valor B */, (int) inst.value(instAttIndex)/* Valor A0*/, inst.weight(), i);
+                        }
+                    }
+
                 }
                 if(obs instanceof SSLGaussianNumericAttributeClassObserver){
                     for(int j = 0; j < inst.numAttributes() - 1; j++){

@@ -8,7 +8,6 @@ import moa.classifiers.core.splitcriteria.SplitCriterion;
 import moa.core.*;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
-
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -58,7 +57,6 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
             valDist.addObservation(attVal, weight);
         }
     }
-
     //Attribute-based
     public void observeClassAttribute(double attVal, int classVal, double weight) {
         if (Utils.isMissingValue(attVal)) {
@@ -80,7 +78,6 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
             valDist.addObservation(attVal, weight);
         }
     }
-
     @Override
     public double probabilityOfAttributeValueGivenClass(double attVal,
                                                         int classVal) {
