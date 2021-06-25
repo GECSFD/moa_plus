@@ -465,25 +465,30 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                     obs.observeAttributeClass(inst.value(instAttIndex), (int) inst.classValue(), inst.weight());
                 }
 
+                //DONE
                 if(obs instanceof SSLNominalAttributeClassObserver){
                     for(int j  = 0; j < inst.numAttributes() - 1; j++) {
                         int comparedAttIndex = modelAttIndexToInstanceAttIndex(j, inst);
-                        System.out.println(comparedAttIndex);
                         if (inst.attribute(j).isNominal()) {
-                            System.out.println("Nominal");
                             ((SSLNominalAttributeClassObserver) obs).observeNominalAttribute(inst.value(comparedAttIndex)/*Valor B0*/, comparedAttIndex /*Valor B */, (int) inst.value(instAttIndex)/* Valor A0*/, inst.weight(), i);
                         }
                         else if (inst.attribute(j).isNumeric()) {
-                            System.out.println("Numerico");
                             ((SSLNominalAttributeClassObserver) obs).observeNumericAttribute(inst.value(comparedAttIndex)/*Valor B0*/, comparedAttIndex /*Valor B */, (int) inst.value(instAttIndex)/* Valor A0*/, inst.weight(), i);
                         }
                     }
 
                 }
+
                 if(obs instanceof SSLGaussianNumericAttributeClassObserver){
                     for(int j = 0; j < inst.numAttributes() - 1; j++){
                         //if( j != i ){
-                            ((SSLGaussianNumericAttributeClassObserver) obs).observeClassAttribute(inst.value(instAttIndex),(int) inst.value(instAttIndex),inst.weight());
+                        int comparedAttIndex = modelAttIndexToInstanceAttIndex(j,inst);
+                        if(inst.attribute(j).isNominal()){
+                            ((SSLGaussianNumericAttributeClassObserver) obs).observeNominalAttribute(inst.value(comparedAttIndex)/*Valor B0*/,(int) inst.value(instAttIndex)/* Valor A0*/, inst.weight());
+                        }
+                        else if(inst.attribute(j).isNumeric()){
+                            ((SSLGaussianNumericAttributeClassObserver) obs).observeNumericAttribute(inst.value(instAttIndex),(int) inst.value(comparedAttIndex),inst.weight());
+                        }
                        // }
                     }
                 }
@@ -531,7 +536,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
 
         // Impurity measures
-        public AttributeSplitSuggestion[]getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,ArrayList classesDistribution,ArrayList<Attribute> attributes) {
+        public AttributeSplitSuggestion[]getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,double preImpurity) {
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
             LevaticImpurityCriterion crit = null;
@@ -539,9 +544,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             if(criterion instanceof LevaticImpurityCriterion){
                 //System.out.println("foi");
                 crit = (LevaticImpurityCriterion) criterion;
-                crit.setHt(ht);
-                crit.setPreSplitClassesDistribution(classesDistribution);
-                crit.setPreSplitAttributesDist(attributes);
+                crit.setPreImpurity(preImpurity);
             }
 
             double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
@@ -824,19 +827,15 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
     }
 
      //Vitor + Igor
-    protected void attemptToSplitSSL(ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht, ArrayList classesDistribution, ArrayList<moa.classifiers.trees.iadem.SSL.Attribute> attributes) {
+    protected void attemptToSplitSSL(ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht,double preImpurity) {
         if (!node.observedClassDistributionIsPure()) {
             // Criacao do SplitCriterion  -> splitCriterionOption eh um handler com a o opcoes  (InfoGainCriterion)
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
             // Chamada da getBestSplitSugestion passando o splitCriterion
-            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestionsSSL(splitCriterion,ht,classesDistribution,attributes);
+            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestionsSSL(splitCriterion,ht,preImpurity);
             //AttributeSplitSuggestion[] preBestSplitSuggestions = node.getBestSplitSuggestions(splitCriterion, this);
             Arrays.sort(bestSplitSuggestions);
             boolean shouldSplit = false;
-
-
-
-
 
             // if bestSplitSuggestion = 1
             if (bestSplitSuggestions.length < 2) {
@@ -844,24 +843,8 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             } else {
                 double hoeffdingBound = computeHoeffdingBound(splitCriterion.getRangeOfMerit(node.getObservedClassDistribution()), this.splitConfidenceOption.getValue(), node.getWeightSeen());
 
-
-                //Seleciona o valor do array BestSplitSuggestions com menor impurity e em que ela eh maior que 0;
-                AttributeSplitSuggestion bestSuggestion= null;
-                AttributeSplitSuggestion secondBestSuggestion = null;
-                for(int i = 0 ;i< bestSplitSuggestions.length;i++){
-                    if(bestSplitSuggestions[i].merit > 0){
-                        bestSuggestion = bestSplitSuggestions[i];
-                        if(i+1 == bestSplitSuggestions.length) {
-                            secondBestSuggestion = bestSplitSuggestions[i];
-                        }
-                        else{
-                            secondBestSuggestion = bestSplitSuggestions[i+1];
-                        }
-                        break;
-                    }
-                }
-                //AttributeSplitSuggestion bestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 1];
-                //AttributeSplitSuggestion secondBestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 2];
+                AttributeSplitSuggestion bestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 1];
+                AttributeSplitSuggestion secondBestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 2];
 
                 System.out.println("hoeffdingBound : " + hoeffdingBound);
                 if (bestSuggestion!=null){
@@ -875,7 +858,6 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
                 // !!!!! Alterar o calculo do merit para a utilizar a impureza calculada. Comparar com o hoeffBound
                 //if ((bestSuggestion.merit - secondBestSuggestion.merit > medida) || (medida > this.tieThresholdOption.getValue())) {
-
                 if (((bestSuggestion !=null && secondBestSuggestion !=null) && (bestSuggestion.merit + secondBestSuggestion.merit > hoeffdingBound)) || hoeffdingBound > this.tieThresholdOption.getValue()) {
                     System.out.println("ENTROU !");
                     shouldSplit = true;

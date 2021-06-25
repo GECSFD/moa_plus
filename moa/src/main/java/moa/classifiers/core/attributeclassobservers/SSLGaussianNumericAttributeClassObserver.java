@@ -58,7 +58,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
         }
     }
     //Attribute-based
-    public void observeClassAttribute(double attVal, int classVal, double weight) {
+    public void observeNumericAttribute(double attVal, int classVal, double weight) {
         if (Utils.isMissingValue(attVal)) {
         } else {
             GaussianEstimator valDist = this.attValDistPerAtt.get(classVal);
@@ -78,6 +78,29 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
             valDist.addObservation(attVal, weight);
         }
     }
+
+    //Attribute-based
+    public void observeNominalAttribute(double attVal, int classVal, double weight) {
+        if (Utils.isMissingValue(attVal)) {
+        } else {
+            GaussianEstimator valDist = this.attValDistPerAtt.get(classVal);
+            if (valDist == null) {
+                valDist = new GaussianEstimator();
+                this.attValDistPerAtt.set(classVal, valDist);
+                this.minValueObservedPerAtt.setValue(classVal, attVal);
+                this.maxValueObservedPerAtt.setValue(classVal, attVal);
+            } else {
+                if (attVal < this.minValueObservedPerAtt.getValue(classVal)) {
+                    this.minValueObservedPerAtt.setValue(classVal, attVal);
+                }
+                if (attVal > this.maxValueObservedPerAtt.getValue(classVal)) {
+                    this.maxValueObservedPerAtt.setValue(classVal, attVal);
+                }
+            }
+            valDist.addObservation(attVal, weight);
+        }
+    }
+
     @Override
     public double probabilityOfAttributeValueGivenClass(double attVal,
                                                         int classVal) {
@@ -93,13 +116,11 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
         double[] suggestedSplitValues = getSplitPointSuggestions();
         for (double splitValue : suggestedSplitValues) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(splitValue);
-
             double[][] postAttSplitDists = getAttributeDistResultingFromBinarySplit(splitValue);
             if (criterion instanceof LevaticImpurityCriterion){
-//                TODO: Passar os atributos para o critério
+//               TODO: Passar os atributos para o critério
                 ((LevaticImpurityCriterion) criterion).setPreSplitAttributesDist(null);
             }
-
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {
@@ -145,8 +166,23 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     }
 
     public double[][] getAttributeDistResultingFromBinarySplit(double splitValue) {
-//        TODO: implementar isso aqui
-        return null;
+        DoubleVector lhsDist = new DoubleVector();
+        DoubleVector rhsDist = new DoubleVector();
+        for (int i = 0; i < this.attValDistPerAtt.size(); i++) {
+            GaussianEstimator estimator = this.attValDistPerAtt.get(i);
+            if (estimator != null) {
+                if (splitValue < this.minValueObservedPerAtt.getValue(i)) {
+                    rhsDist.addToValue(i, estimator.getTotalWeightObserved());
+                } else if (splitValue >= this.maxValueObservedPerAtt.getValue(i)) {
+                    lhsDist.addToValue(i, estimator.getTotalWeightObserved());
+                } else {
+                    double[] weightDist = estimator.estimatedWeight_LessThan_EqualTo_GreaterThan_Value(splitValue);
+                    lhsDist.addToValue(i, weightDist[0] + weightDist[1]);
+                    rhsDist.addToValue(i, weightDist[2]);
+                }
+            }
+        }
+        return new double[][]{lhsDist.getArrayRef(), rhsDist.getArrayRef()};
     }
 
     // assume all values equal to splitValue go to lhs
