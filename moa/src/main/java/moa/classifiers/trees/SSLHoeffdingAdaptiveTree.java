@@ -944,7 +944,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
                 impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                ht.attemptToSplitSSL(this, parent, parentBranch, inst, ht,this.classesDistribution,this.attributes);
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst,ht,impurity);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 

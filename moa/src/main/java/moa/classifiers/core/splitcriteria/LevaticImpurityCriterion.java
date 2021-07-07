@@ -53,6 +53,11 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
     }
 
     //PRE-SPLIT
+    double preImpurity;
+    public void setPreImpurity(double preImpurity) {
+        this.preImpurity = preImpurity;
+    }
+
     ArrayList preSplitClassesDistribution = new ArrayList();
     public void setPreSplitClassesDistribution(ArrayList classesDistribution) { this.preSplitClassesDistribution = classesDistribution; }
     ArrayList<Attribute> preSplitAttributesDist = new ArrayList<Attribute>();
@@ -80,7 +85,8 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
 
     public double getMeritOfSplit(double[] preSplitDist, double[][] postSplitDists) {
-        double impurityPreSplit = preImpurity(this.preSplitClassesDistribution,this.preSplitAttributesDist); // impurity(preSplit) - impurity(postSplit)
+        //double impurityPreSplit = preImpurity(this.preSplitClassesDistribution,this.preSplitAttributesDist); // impurity(preSplit) - impurity(postSplit)
+        double impurityPreSplit = this.preImpurity;
         double impurityPostSplit = postImpurity(postSplitDists,postSplitAttributesDist);
 
         return impurityPreSplit - impurityPostSplit;
@@ -265,7 +271,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                 continue;
             }
             for(int j = 0;j < postAttSplitDist.get(i).size();j++){
-                Attribute att = (Attribute) preSplitAttributesDist.get(i); // only to get attType
+                Attribute att = (Attribute) preSplitAttributesDist.get(j); // only to get attType
 
                 if (att.getType() == "nominal") {
 
@@ -283,6 +289,7 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
                             continue;
                         }
                         for(int n = 0 ; n < postAttSplitDist.get(i).get(j).numValues();n++){
+
                             treeAppearances += (int) postAttSplitDist.get(k).get(j).getValue(n);
                             treeValues = new DoubleVector();
                             treeValues.setValue(n,treeValues.getValue(n) + postAttSplitDist.get(k).get(j).getValue(n));
@@ -306,6 +313,9 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
         //ponderacao
         double ponderedSSLImpurity = 0.0;
+
+        //A A0 A1 = A0 *impurityA0 / A  + A1 * IMPURITYA1 / A
+
         //if nominal
         if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "nominal"){
             ArrayList<Integer> totalAttDist = new ArrayList<Integer>();

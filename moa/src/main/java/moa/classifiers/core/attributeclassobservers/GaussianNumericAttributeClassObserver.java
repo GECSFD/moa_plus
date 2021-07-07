@@ -110,6 +110,7 @@ public class GaussianNumericAttributeClassObserver extends AbstractOptionHandler
         return bestSuggestion;
     }
 
+    // NAO UTILIZA DE FATO AS CLASSES !!!!!!!
     public double[] getSplitPointSuggestions() {
         Set<Double> suggestedSplitValues = new TreeSet<Double>();
         double minValue = Double.POSITIVE_INFINITY;

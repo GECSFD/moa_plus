@@ -5,6 +5,7 @@ import moa.classifiers.core.conditionaltests.NominalAttributeBinaryTest;
 import moa.classifiers.core.conditionaltests.NominalAttributeMultiwayTest;
 import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
+import moa.classifiers.oneclass.Autoencoder;
 import moa.core.*;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
@@ -31,7 +32,7 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     public int attIndexOfSplit = 0;
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
     public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
-    public AutoExpandVector<ArrayList<GaussianEstimator>> gaussianEstimators = new AutoExpandVector<ArrayList<GaussianEstimator>>();
+    public AutoExpandVector<AutoExpandVector<GaussianEstimator>> gaussianEstimators = new AutoExpandVector<>();
     /*
     Attributo-classe A
     Attributos a serem comparados : B,C,..,N
@@ -105,9 +106,6 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;
         } else {
-            //cast para inteiro
-            int attValInt = (int) attVal;
-
             //pega A0
             AutoExpandVector attDist = this.attValDistPerAttribute.get(attAsClassVal);
             if (attDist == null)
@@ -120,14 +118,23 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
                 this.attValDistPerAttribute.get(attAsClassVal).set(attFlag,valDist);
             }
 
+            AutoExpandVector estimatorDist = this.gaussianEstimators.get(attAsClassVal);
+            if(estimatorDist == null){
+                this.gaussianEstimators.set(attAsClassVal, new AutoExpandVector<GaussianEstimator>());
+            }
+
             GaussianEstimator estimator = this.gaussianEstimators.get(attAsClassVal).get(attFlag);
             if(estimator == null){
                 estimator = new GaussianEstimator();
                 estimator.addObservation(attVal,weight);
-                
+                this.gaussianEstimators.get(attAsClassVal).set(attFlag,estimator);
+            }
+            else{
+                estimator.addObservation(attVal,weight);
+                this.gaussianEstimators.get(attAsClassVal).set(attFlag,estimator);
             }
             // Pega o valor
-            valDist.setValue(attValInt,estimator.getVariance());
+            valDist.setValue(0,estimator.getVariance());
         }
         this.totalWeightObserved += weight;
     }
@@ -208,7 +215,6 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
                         postSplitDists, merit);
             }
         }
-
         return bestSuggestion;
     }
 
@@ -245,14 +251,12 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
 //    }
 
     /*
-
     ClassVal1:
         A1.1
         A2.1
     ClassVal2:
         A1.2
         A2.2
-
     1:
         A1.1
         A1.2
