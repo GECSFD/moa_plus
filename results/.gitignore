@@ -1,2 +1,5 @@
 out**
-*.txt
+result.*
+.venv
+.ipynb_checkpoints
+__pycache__
