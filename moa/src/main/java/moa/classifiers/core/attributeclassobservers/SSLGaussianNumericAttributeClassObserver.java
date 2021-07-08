@@ -19,6 +19,7 @@ import java.util.TreeSet;
  * @author Igor Froehner e Vitor Clemes
  * @version $Revision: 1 $
  */
+
 public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHandler
         implements NumericAttributeClassObserver {
 
@@ -31,6 +32,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     protected DoubleVector minValueObservedPerAtt = new DoubleVector();
     protected DoubleVector maxValueObservedPerAtt = new DoubleVector();
     protected AutoExpandVector<GaussianEstimator> attValDistPerAtt = new AutoExpandVector<>();
+    protected AutoExpandVector<Double> numAttValDistPerAtt = new AutoExpandVector<>();
 
     public IntOption numBinsOption = new IntOption("numBins", 'n',
             "The number of bins.", 10, 1, Integer.MAX_VALUE);
@@ -40,6 +42,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     public void observeAttributeClass(double attVal, int classVal, double weight) {
         if (Utils.isMissingValue(attVal)) {
         } else {
+            //Double valDist = this.numAttValDistPerAtt.get(classVal);
             GaussianEstimator valDist = this.attValDistPerClass.get(classVal);
             if (valDist == null) {
                 valDist = new GaussianEstimator();
@@ -117,10 +120,6 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
         for (double splitValue : suggestedSplitValues) {
             double[][] postSplitDists = getClassDistsResultingFromBinarySplit(splitValue);
             double[][] postAttSplitDists = getAttributeDistResultingFromBinarySplit(splitValue);
-            if (criterion instanceof LevaticImpurityCriterion){
-//               TODO: Passar os atributos para o critério
-                ((LevaticImpurityCriterion) criterion).setPreSplitAttributesDist(null);
-            }
             double merit = criterion.getMeritOfSplit(preSplitDist,
                     postSplitDists);
             if ((bestSuggestion == null) || (merit > bestSuggestion.merit)) {

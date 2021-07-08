@@ -536,7 +536,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
 
         // Impurity measures
-        public AttributeSplitSuggestion[]getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,double preImpurity) {
+        public AttributeSplitSuggestion[]   getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,double preImpurity,ArrayList attributes) {
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
             LevaticImpurityCriterion crit = null;
@@ -544,7 +544,9 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             if(criterion instanceof LevaticImpurityCriterion){
                 //System.out.println("foi");
                 crit = (LevaticImpurityCriterion) criterion;
+                crit.setHt(ht);
                 crit.setPreImpurity(preImpurity);
+                crit.setPreSplitAttributesDist(attributes);
             }
 
             double[] preSplitDist = this.observedClassDistribution.getArrayCopy();
@@ -827,13 +829,12 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
     }
 
      //Vitor + Igor
-    protected void attemptToSplitSSL(ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht,double preImpurity) {
+    protected void attemptToSplitSSL(ActiveLearningNode node, SplitNode parent, int parentIndex, Instance inst, SSLHoeffdingAdaptiveTree ht,double preImpurity,ArrayList attributes) {
         if (!node.observedClassDistributionIsPure()) {
             // Criacao do SplitCriterion  -> splitCriterionOption eh um handler com a o opcoes  (InfoGainCriterion)
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
             // Chamada da getBestSplitSugestion passando o splitCriterion
-            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestionsSSL(splitCriterion,ht,preImpurity);
-            //AttributeSplitSuggestion[] preBestSplitSuggestions = node.getBestSplitSuggestions(splitCriterion, this);
+            AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestionsSSL(splitCriterion,ht,preImpurity,attributes);
             Arrays.sort(bestSplitSuggestions);
             boolean shouldSplit = false;
 
@@ -854,10 +855,6 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
                 }
 
-                //System.out.println("HOEFFDING -> if case : " + (bestSuggestion.merit - secondBestSuggestion.merit > hoeffdingBound));
-
-                // !!!!! Alterar o calculo do merit para a utilizar a impureza calculada. Comparar com o hoeffBound
-                //if ((bestSuggestion.merit - secondBestSuggestion.merit > medida) || (medida > this.tieThresholdOption.getValue())) {
                 if (((bestSuggestion !=null && secondBestSuggestion !=null) && (bestSuggestion.merit + secondBestSuggestion.merit > hoeffdingBound)) || hoeffdingBound > this.tieThresholdOption.getValue()) {
                     System.out.println("ENTROU !");
                     shouldSplit = true;

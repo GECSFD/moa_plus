@@ -30,7 +30,6 @@ import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
 import java.util.ArrayList;
 
-
 /**
  * Class for computing splitting criteria using Gini
  * with respect to distributions of class values.
@@ -40,6 +39,7 @@ import java.util.ArrayList;
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
  * @version $Revision: 7 $
  */
+
 public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         SplitCriterion {
 
@@ -53,14 +53,11 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
     }
 
     //PRE-SPLIT
-    double preImpurity;
+    double preImpurity; //impureza do nodo
     public void setPreImpurity(double preImpurity) {
         this.preImpurity = preImpurity;
     }
-
-    ArrayList preSplitClassesDistribution = new ArrayList();
-    public void setPreSplitClassesDistribution(ArrayList classesDistribution) { this.preSplitClassesDistribution = classesDistribution; }
-    ArrayList<Attribute> preSplitAttributesDist = new ArrayList<Attribute>();
+    ArrayList<Attribute> preSplitAttributesDist = new ArrayList<Attribute>(); // distribuicao dos atributos
     public void setPreSplitAttributesDist(ArrayList attributes) {
         this.preSplitAttributesDist = attributes;
     }
@@ -104,101 +101,6 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
 
     public void getDescription(StringBuilder sb, int indent) {
         // TODO Auto-generated method stub
-    }
-
-    // KENNY (Pre-Split)
-    public double preGini(ArrayList classesDistribution, int totalAppearances) {
-        // appearances = classesDist
-        int numClasses = (int) classesDistribution.size();
-        double summation = 0.0;
-        double probability = 0.0;
-
-
-        for (int i = 0; i < numClasses; i++) {
-            int distribution = (int) classesDistribution.get(i);
-            if (totalAppearances != 0) {
-                probability = (double) distribution / totalAppearances;
-                probability = probability * probability;
-            } else {
-                probability = 0;
-            }
-            summation += probability;
-        }
-
-        return (1 - summation);
-    }
-
-    public double preVariance(ArrayList oldData, double sum, int totalCount) {
-        double variance = 0.0;
-        double rightSide = (sum * sum) / totalCount;
-        double leftSide = 0.0;
-
-        for (int j = 0; j < oldData.size(); j++) {
-            double val = (double) oldData.get(j);
-
-            leftSide = leftSide + (val * val);
-        }
-
-        variance = (leftSide - rightSide) / totalCount;
-
-        return variance;
-    }
-
-    public double preImpurity(ArrayList classesDistribution, ArrayList<Attribute> attributes) {
-        double impurity = 0.0;
-        double w = levaticWeight.getValue(); // original = 0.5
-
-        int totalLabeled = 0;
-
-        for (int i = 0; i < classesDistribution.size(); i++) {
-            totalLabeled += (int) classesDistribution.get(i);
-        }
-
-        //Testes
-
-        {/*double entropyLabeled = this.entropy(classesDistribution, totalLabeled);
-        //double entropyLabeledTraining = this.entropy(this.classesDistribution, this.totalLabeled);
-        double supervised = w * entropyLabeled;*/}
-
-
-        double giniLabeled = this.preGini(classesDistribution,totalLabeled); //supostamente apenas rotulados
-        double giniLabeledTraining = this.preGini(ht.getClassesDistribution(),ht.getTotalLabeled()); // conjunto total
-
-        //E1
-        double supervised = w * (giniLabeled / giniLabeledTraining);
-
-        int numAttributes = attributes.size();
-        double semisupervised = 0.0;
-        double sslimpurity = 0.0;
-
-
-        for (int i = 0; i < numAttributes; i++) {
-            Attribute att = (Attribute) attributes.get(i);
-            Attribute treeAttribute = (Attribute) ht.getAttributes().get(i);
-
-
-            if (att.getType() == "nominal") {
-                double giniNode = this.preGini(att.getAppearances(), att.getAppearancesCount());
-                double giniTree = this.preGini(treeAttribute.getAppearances(), treeAttribute.getAppearancesCount());
-
-                sslimpurity += giniNode/giniTree;
-            } else if (att.getType() == "numeric") {
-                double varianceNode = this.preVariance(att.getValues(), att.getSum(), att.getCount());
-                double varianceTree = this.preVariance(treeAttribute.getValues(), treeAttribute.getSum(), treeAttribute.getCount());
-
-                sslimpurity += varianceNode/varianceTree;
-            } else {
-                continue;
-            }
-        }
-
-        semisupervised = ((1-w) / numAttributes) * sslimpurity;
-        impurity = supervised + semisupervised;
-
-        //Comentada
-//        return impurity >= 0.8 ? Math.abs(0.97 - impurity) : impurity;
-
-        return impurity;
     }
 
     // VITOR E IGOR (Post-Split)
@@ -265,33 +167,34 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         int numAttributes = this.preSplitAttributesDist.size(); // only to get attListSize
         ArrayList<Double> unsupervisedValues = new ArrayList<Double>();
 
-
+        // Itera no numero de classes ( Ex: se bin, entao size == 2 )
         for(int i = 0 ; i < postAttSplitDist.size();i++){
             if(postAttSplitDist.get(i) == null){
                 continue;
             }
+
+            // Itera no numero de atributos comparados ( Ex : se Atts = [A,B,C...,N] entao size = N )
             for(int j = 0;j < postAttSplitDist.get(i).size();j++){
                 Attribute att = (Attribute) preSplitAttributesDist.get(j); // only to get attType
 
                 if (att.getType() == "nominal") {
-
                     int nodeAppearences = 0;
                     for(int k = 0; k < postAttSplitDist.get(i).get(j).numValues();k++){
                         nodeAppearences += (int) postAttSplitDist.get(i).get(j).getValue(k);
                     }
                     double giniNode = postUnsupervisedGini(postAttSplitDist.get(i).get(j),nodeAppearences);
+
+                    // Guarda o valor total da arvore
                     int treeAppearances = 0;
+                    DoubleVector treeValues = new DoubleVector();
 
-                    DoubleVector treeValues = null;
-
+                    // Itera no numero de classes ( Ex: se bin, entao size == 2 )
                     for (int k = 0 ; k < postAttSplitDist.size();k++){
                         if(postAttSplitDist.get(k) == null){
                             continue;
                         }
-                        for(int n = 0 ; n < postAttSplitDist.get(i).get(j).numValues();n++){
-
+                        for(int n = 0 ; n < postAttSplitDist.get(k).get(j).numValues();n++){
                             treeAppearances += (int) postAttSplitDist.get(k).get(j).getValue(n);
-                            treeValues = new DoubleVector();
                             treeValues.setValue(n,treeValues.getValue(n) + postAttSplitDist.get(k).get(j).getValue(n));
                         }
                     }

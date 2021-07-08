@@ -32,9 +32,6 @@ import moa.core.DoubleVector;
 import moa.core.MiscUtils;
 import moa.core.Utils;
 
-//import java.io.File;
-//import java.io.FileWriter;
-//import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -944,7 +941,7 @@ public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
             if (weightSeen - this.getWeightSeenAtLastSplitEvaluation() >= ht.gracePeriodOption.getValue()) {
                 impurity = ht.impurity(this.classesDistribution, this.attributes);
                 //ht.attemptToSplit(this, parent, parentBranch, impurity, inst, ht);
-                ht.attemptToSplitSSL(this, parent, parentBranch, inst,ht,impurity);
+                ht.attemptToSplitSSL(this, parent, parentBranch, inst,ht,impurity,attributes);
                 this.setWeightSeenAtLastSplitEvaluation(weightSeen);
             }
 
