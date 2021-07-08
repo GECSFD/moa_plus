@@ -42,6 +42,14 @@ parser.add_argument(
     help="numero de classes numericas"
 )
 
+parser.add_argument(
+    "--arff_file",
+    "-a",
+    type=str,
+    default=None,
+    help="arff file to use in the stream generator, if it is passed -n -nm -nr will be ignored"
+)
+
 # model params
 parser.add_argument(
     "--remove_chance",

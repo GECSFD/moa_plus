@@ -30,6 +30,8 @@ if __name__ == '__main__':
     n_nominals = args.n_nominals
     n_numericals = args.n_numericals
 
+    arff_file = args.arff_file
+
     max_instances = args.max_instances
     sample_frequency = args.sample_frequency
 
@@ -46,6 +48,10 @@ if __name__ == '__main__':
 
     open(result_file_name, 'w').close() # clean the results file before
 
+    stream_str = f'-s (generators.RandomTreeGenerator -c {n_classes} -o {n_nominals} -u {n_numericals}) ' # generator of the stream
+    if not arff_file is None:
+        stream_str = f'-s (ArffFileStream -f {arff_file})'
+
     for i in range(len(remove_chances)):
         print(f'Running {i}')
 
@@ -57,7 +63,7 @@ if __name__ == '__main__':
         os.system(f'java -cp {jar_path}{jar_name} moa.DoTask "' +
                 f'EvaluatePrequential ' + # task choosen
                 f'-l (trees.SSLHoeffdingAdaptiveTree -C {remove_chance} -R {remove_classes}) ' + # class of selected model to be evaluated
-                f'-s (generators.RandomTreeGenerator -c {n_classes} -o {n_nominals} -u {n_numericals}) ' + # generator of the stream
+                stream_str +
                 f'-i {max_instances} ' + # max instances to classify
                 f'-d {dump_path}{dump_name} -f {sample_frequency}' + # dump options to dump
                 f'"')
