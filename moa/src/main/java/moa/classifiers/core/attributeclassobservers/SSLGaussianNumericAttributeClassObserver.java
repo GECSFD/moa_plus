@@ -5,11 +5,12 @@ import moa.classifiers.core.AttributeSplitSuggestion;
 import moa.classifiers.core.conditionaltests.NumericAttributeBinaryTest;
 import moa.classifiers.core.splitcriteria.LevaticImpurityCriterion;
 import moa.classifiers.core.splitcriteria.SplitCriterion;
+import moa.classifiers.trees.iadem.SSL.Attribute;
 import moa.core.*;
 import moa.options.AbstractOptionHandler;
 import moa.tasks.TaskMonitor;
-import java.util.Set;
-import java.util.TreeSet;
+
+import java.util.*;
 
 /**
  * Class for observing the class and attributes data distribution for a numeric attribute using gaussian estimators.
@@ -19,6 +20,23 @@ import java.util.TreeSet;
  * @author Igor Froehner e Vitor Clemes
  * @version $Revision: 1 $
  */
+
+class AttributeInfo{
+
+    public AttributeInfo(double value,boolean isNominal){
+        this.value = value;
+        this.isNominal = isNominal;
+        this.appearances = 0;
+    }
+    protected int pos;
+    protected double value;
+    protected int appearances;
+    protected boolean isNominal;
+
+    public void addAppearances(){
+        this.appearances ++;
+    }
+}
 
 public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHandler
         implements NumericAttributeClassObserver {
@@ -31,6 +49,7 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
 
     protected DoubleVector minValueObservedPerAtt = new DoubleVector();
     protected DoubleVector maxValueObservedPerAtt = new DoubleVector();
+    protected Map<Double, AutoExpandVector<AutoExpandVector>> allAttributesValues = new HashMap<Double,AutoExpandVector<AutoExpandVector>>();
     protected AutoExpandVector<GaussianEstimator> attValDistPerAtt = new AutoExpandVector<>();
     protected AutoExpandVector<Double> numAttValDistPerAtt = new AutoExpandVector<>();
 
@@ -42,7 +61,6 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
     public void observeAttributeClass(double attVal, int classVal, double weight) {
         if (Utils.isMissingValue(attVal)) {
         } else {
-            //Double valDist = this.numAttValDistPerAtt.get(classVal);
             GaussianEstimator valDist = this.attValDistPerClass.get(classVal);
             if (valDist == null) {
                 valDist = new GaussianEstimator();
@@ -61,52 +79,31 @@ public class SSLGaussianNumericAttributeClassObserver extends AbstractOptionHand
         }
     }
     //Attribute-based
-    public void observeNumericAttribute(double attVal, int classVal, double weight) {
-        if (Utils.isMissingValue(attVal)) {
-        } else {
-            GaussianEstimator valDist = this.attValDistPerAtt.get(classVal);
-            if (valDist == null) {
-                valDist = new GaussianEstimator();
-                this.attValDistPerAtt.set(classVal, valDist);
-                this.minValueObservedPerAtt.setValue(classVal, attVal);
-                this.maxValueObservedPerAtt.setValue(classVal, attVal);
-            } else {
-                if (attVal < this.minValueObservedPerAtt.getValue(classVal)) {
-                    this.minValueObservedPerAtt.setValue(classVal, attVal);
-                }
-                if (attVal > this.maxValueObservedPerAtt.getValue(classVal)) {
-                    this.maxValueObservedPerAtt.setValue(classVal, attVal);
+    public void observeNumericAttribute(double attVal, double attAsClassVal,int attFlag,double weight) {
+        if (Utils.isMissingValue(attVal)) {}
+        else {
+            if(!allAttributesValues.containsKey(attAsClassVal)){
+                allAttributesValues.put(attAsClassVal,new AutoExpandVector<>());
+            }
+            AutoExpandVector<AttributeInfo> valDist = allAttributesValues.get(attAsClassVal).get(attFlag);
+            if (valDist == null){
+                valDist = new AutoExpandVector<AttributeInfo>();
+            }
+            boolean found = false;
+            for ( int i = 0; i < valDist.size();i++){
+                if(valDist.get(i).value == attVal){
+                    valDist.get(i).appearances++;
+                    found = true;
                 }
             }
-            valDist.addObservation(attVal, weight);
-        }
-    }
-
-    //Attribute-based
-    public void observeNominalAttribute(double attVal, int classVal, double weight) {
-        if (Utils.isMissingValue(attVal)) {
-        } else {
-            GaussianEstimator valDist = this.attValDistPerAtt.get(classVal);
-            if (valDist == null) {
-                valDist = new GaussianEstimator();
-                this.attValDistPerAtt.set(classVal, valDist);
-                this.minValueObservedPerAtt.setValue(classVal, attVal);
-                this.maxValueObservedPerAtt.setValue(classVal, attVal);
-            } else {
-                if (attVal < this.minValueObservedPerAtt.getValue(classVal)) {
-                    this.minValueObservedPerAtt.setValue(classVal, attVal);
-                }
-                if (attVal > this.maxValueObservedPerAtt.getValue(classVal)) {
-                    this.maxValueObservedPerAtt.setValue(classVal, attVal);
-                }
+            if (!found){
+                valDist.add(new AttributeInfo(attVal,false));
             }
-            valDist.addObservation(attVal, weight);
         }
     }
 
     @Override
-    public double probabilityOfAttributeValueGivenClass(double attVal,
-                                                        int classVal) {
+    public double probabilityOfAttributeValueGivenClass(double attVal,int classVal) {
         GaussianEstimator obs = this.attValDistPerClass.get(classVal);
         return obs != null ? obs.probabilityDensity(attVal) : 0.0;
     }

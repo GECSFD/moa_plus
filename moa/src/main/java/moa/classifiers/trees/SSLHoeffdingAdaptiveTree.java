@@ -57,8 +57,6 @@ import java.util.Random;
  * @version $Revision: 7 $
  */
 
-
-
 public class SSLHoeffdingAdaptiveTree extends HoeffdingTree {
 
     private static final long serialVersionUID = 1L;

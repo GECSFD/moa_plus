@@ -33,48 +33,6 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
     public AutoExpandVector<DoubleVector> attValDistPerClass = new AutoExpandVector<DoubleVector>();
     public AutoExpandVector<AutoExpandVector<DoubleVector>> attValDistPerAttribute = new AutoExpandVector<AutoExpandVector<DoubleVector>>();
     public AutoExpandVector<AutoExpandVector<GaussianEstimator>> gaussianEstimators = new AutoExpandVector<>();
-    /*
-    Attributo-classe A
-    Attributos a serem comparados : B,C,..,N
-
-    ClassValue0:
-        A1.1
-        A2.1
-    ClassValue1:
-        A1.2
-        A2.2
-
-    A1.1
-    A1.2
-
-    A2.1
-    A2.2
-
-    A0:
-        A:
-            A0:100%
-            A1:0%
-        B:                             Numerico
-            Bi : 10
-            Bii : 20
-        C:                             Nominal
-            Ci : 13
-            Cii : 23
-        N:                             Nominal
-            Ni : 10
-            Nii : 12
-    A1:
-        B:
-            Bi : 23
-            Bii : 32
-        C:
-            Ci : 23
-            Cii : 13
-        N:
-            Ni : 22
-            Nii : 10
-     An...
-     */
 
     //Class-Based
     @Override
@@ -139,7 +97,9 @@ public class SSLNominalAttributeClassObserver extends AbstractOptionHandler impl
         this.totalWeightObserved += weight;
     }
 
-    public void observeNominalAttribute(double attVal,int attFlag,int attAsClassVal,double weight,int attIndex) {
+    public void observeNominalAttribute(/* valor do atributo*/double attVal,/*index do atributo*/int attFlag,
+            /*Valor do atributo como Classe*/int attAsClassVal,double weight,int attIndex) {
+
         this.attIndexOfSplit = attIndex;
         if (Utils.isMissingValue(attVal)) {
             this.missingWeightObserved += weight;

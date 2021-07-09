@@ -484,10 +484,10 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                         //if( j != i ){
                         int comparedAttIndex = modelAttIndexToInstanceAttIndex(j,inst);
                         if(inst.attribute(j).isNominal()){
-                            ((SSLGaussianNumericAttributeClassObserver) obs).observeNominalAttribute(inst.value(comparedAttIndex)/*Valor B0*/,(int) inst.value(instAttIndex)/* Valor A0*/, inst.weight());
+                            //((SSLGaussianNumericAttributeClassObserver) obs).observeNominalAttribute(inst.value(comparedAttIndex)/*Valor B0*/,(int) inst.value(instAttIndex)/* Valor A0*/, inst.weight());
                         }
                         else if(inst.attribute(j).isNumeric()){
-                            ((SSLGaussianNumericAttributeClassObserver) obs).observeNumericAttribute(inst.value(instAttIndex),(int) inst.value(comparedAttIndex),inst.weight());
+                            ((SSLGaussianNumericAttributeClassObserver) obs).observeNumericAttribute(inst.value(instAttIndex),inst.value(comparedAttIndex),comparedAttIndex,inst.weight());
                         }
                        // }
                     }
