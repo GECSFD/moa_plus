@@ -42,6 +42,7 @@ parser.add_argument(
     help="numero de classes numericas"
 )
 
+# arff files
 parser.add_argument(
     "--arff_file",
     "-a",
@@ -64,6 +65,13 @@ parser.add_argument(
     type=bool,
     default=True,
     help="True para remover aleatoriamente algumas classes e False para não"
+)
+parser.add_argument(
+    "--levatic_weight",
+    "-W",
+    type=float,
+    default=0.5,
+    help="levatic weight"
 )
 
 # remove chances

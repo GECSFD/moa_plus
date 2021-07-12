@@ -38,11 +38,12 @@ if __name__ == '__main__':
     remove_chance_min = args.remove_chance_min
     remove_chance_max = args.remove_chance_max
     remove_chance_inc = args.remove_chance_inc
-    assert(remove_chance_min < remove_chance_max)
+    assert(remove_chance_min <= remove_chance_max)
 
+    levatic_weight = args.levatic_weight
     remove_chances = []
     remove_chance_item = remove_chance_min
-    while remove_chance_item < remove_chance_max:
+    while remove_chance_item <= remove_chance_max:
         remove_chances.append(remove_chance_item)
         remove_chance_item = round(remove_chance_item+remove_chance_inc, 2)
 
@@ -52,6 +53,12 @@ if __name__ == '__main__':
     if not arff_file is None:
         stream_str = f'-s (ArffFileStream -f {arff_file})'
 
+    nominal_class_observer = ''
+    numeric_class_observer = ''
+    if remove_classes:
+        nominal_class_observer = '-d SSLNominalAttributeClassObserver'
+        numeric_class_observer = '-n SSLGaussianNumericAttributeClassObserver'
+
     for i in range(len(remove_chances)):
         print(f'Running {i}')
 
@@ -60,13 +67,17 @@ if __name__ == '__main__':
 
         open(f'{dump_path}{dump_name}', 'w').close() # clean the output file before running again
 
-        os.system(f'java -cp {jar_path}{jar_name} moa.DoTask "' +
-                f'EvaluatePrequential ' + # task choosen
-                f'-l (trees.SSLHoeffdingAdaptiveTree -C {remove_chance} -R {remove_classes}) ' + # class of selected model to be evaluated
-                stream_str +
-                f'-i {max_instances} ' + # max instances to classify
-                f'-d {dump_path}{dump_name} -f {sample_frequency}' + # dump options to dump
-                f'"')
+        command = f'java -cp {jar_path}{jar_name} moa.DoTask "' \
+                f'EvaluatePrequential ' \
+                f'-l (trees.SSLHoeffdingAdaptiveTree {nominal_class_observer} {nominal_class_observer} -C {remove_chance} -R {remove_classes}) ' \
+                f'{stream_str}' \
+                f'-i {max_instances} ' \
+                f'-d {dump_path}{dump_name} -f {sample_frequency}' \
+                '"'
+
+        print(f'Running with the command: {command}')
+
+        os.system(command)
 
         csv_result = pd.read_csv(f'{dump_path}{dump_name}').tail(1) # picks only the last one
 
