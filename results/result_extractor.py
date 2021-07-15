@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
         command = f'java -cp {jar_path}{jar_name} moa.DoTask "' \
                 f'EvaluatePrequential ' \
-                f'-l (trees.SSLHoeffdingAdaptiveTree {nominal_class_observer} {nominal_class_observer} -C {remove_chance} -R {remove_classes}) ' \
+                f'-l (trees.SSLHoeffdingAdaptiveTree {nominal_class_observer} {numeric_class_observer} -C {remove_chance} -R {remove_classes}) ' \
                 f'{stream_str}' \
                 f'-i {max_instances} ' \
                 f'-d {dump_path}{dump_name} -f {sample_frequency}' \
