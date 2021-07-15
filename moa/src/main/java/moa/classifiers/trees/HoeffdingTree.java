@@ -310,7 +310,6 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             this.children = new AutoExpandVector<Node>();
         }
 
-
         public int numChildren() {
             return this.children.size();
         }
@@ -536,13 +535,12 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
 
         // Impurity measures
-        public AttributeSplitSuggestion[]   getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,double preImpurity,ArrayList attributes) {
+        public AttributeSplitSuggestion[] getBestSplitSuggestionsSSL(SplitCriterion criterion,SSLHoeffdingAdaptiveTree ht,double preImpurity,ArrayList attributes) {
             List<AttributeSplitSuggestion> bestSuggestions = new LinkedList<AttributeSplitSuggestion>();
 
             LevaticImpurityCriterion crit = null;
 
             if(criterion instanceof LevaticImpurityCriterion){
-                //System.out.println("foi");
                 crit = (LevaticImpurityCriterion) criterion;
                 crit.setHt(ht);
                 crit.setPreImpurity(preImpurity);
@@ -847,12 +845,16 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                 AttributeSplitSuggestion bestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 1];
                 AttributeSplitSuggestion secondBestSuggestion = bestSplitSuggestions[bestSplitSuggestions.length - 2];
 
+                for(int i = 0 ; i < bestSplitSuggestions.length;i++){
+                    System.out.println("values" + bestSplitSuggestions[i]);
+                }
+
                 System.out.println("hoeffdingBound : " + hoeffdingBound);
                 if (bestSuggestion!=null){
                     System.out.println("bestSuggestion.merit : " + (bestSuggestion.merit));
                     System.out.println("secondSuggestion.merit : " + (secondBestSuggestion.merit));
                     System.out.println("SUM:" + (bestSuggestion.merit + secondBestSuggestion.merit));
-
+                    System.out.println("Tie:" + this.tieThresholdOption.getValue());
                 }
 
                 if (((bestSuggestion !=null && secondBestSuggestion !=null) && (bestSuggestion.merit + secondBestSuggestion.merit > hoeffdingBound)) || hoeffdingBound > this.tieThresholdOption.getValue()) {

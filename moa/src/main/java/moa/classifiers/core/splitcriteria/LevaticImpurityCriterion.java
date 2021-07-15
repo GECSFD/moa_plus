@@ -80,7 +80,6 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
             0.0,
             1.0);
 
-
     public double getMeritOfSplit(double[] preSplitDist, double[][] postSplitDists) {
         //double impurityPreSplit = preImpurity(this.preSplitClassesDistribution,this.preSplitAttributesDist); // impurity(preSplit) - impurity(postSplit)
         double impurityPreSplit = this.preImpurity;
@@ -244,7 +243,6 @@ public class LevaticImpurityCriterion extends AbstractOptionHandler implements
         else if(this.preSplitAttributesDist.get(attIndexOfSplit).getType() == "numeric"){
 
         }
-
 
         unsupervisedImpurity = ((1-w) / numAttributes) * ponderedSSLImpurity;
         return supervisedImpurity + unsupervisedImpurity;
